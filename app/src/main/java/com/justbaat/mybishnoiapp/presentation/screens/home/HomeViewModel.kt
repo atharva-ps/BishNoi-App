@@ -1,0 +1,113 @@
+package com.justbaat.mybishnoiapp.presentation.screens.home
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.justbaat.mybishnoiapp.data.remote.api.ApiService
+import com.justbaat.mybishnoiapp.data.remote.dto.UserSearchDto
+import com.justbaat.mybishnoiapp.domain.model.User
+import com.justbaat.mybishnoiapp.domain.repository.AuthRepository
+import com.justbaat.mybishnoiapp.utils.Resource
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val apiService: ApiService // ✅ Add this
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(HomeUiState())
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    init {
+        loadCurrentUser()
+    }
+
+    private fun loadCurrentUser() {
+        val currentUser = authRepository.getCurrentUser()
+        _uiState.update { it.copy(currentUser = currentUser) }
+    }
+
+    // ✅ Search users
+    fun searchUsers(query: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSearching = true, error = null) }
+
+            try {
+                val response = apiService.searchUsers(query)
+                if (response.isSuccessful && response.body() != null) {
+                    _uiState.update {
+                        it.copy(
+                            isSearching = false,
+                            searchResults = response.body()!!.users
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isSearching = false,
+                            error = "Search failed"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isSearching = false,
+                        error = e.message ?: "An error occurred"
+                    )
+                }
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            authRepository.logout().collect { result ->
+                when (result) {
+                    is Resource.Loading -> {
+                        _uiState.update { it.copy(isLoggingOut = true) }
+                    }
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoggingOut = false,
+                                isLoggedOut = true
+                            )
+                        }
+                    }
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoggingOut = false,
+                                error = result.message ?: "Logout failed"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
+    }
+    fun clearSearchResults() {
+        _uiState.update { it.copy(searchResults = emptyList()) }
+    }
+
+}
+
+data class HomeUiState(
+    val currentUser: User? = null,
+    val isLoggingOut: Boolean = false,
+    val isLoggedOut: Boolean = false,
+    val isSearching: Boolean = false, // ✅ Add this
+    val searchResults: List<UserSearchDto> = emptyList(), // ✅ Add this
+    val error: String? = null
+)
