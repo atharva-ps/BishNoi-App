@@ -7,19 +7,16 @@ sealed class Screen(val route: String) {
 
     // Main Routes
     object Home : Screen("home")
+    object Search : Screen("search") // ✅ Add this
     object Profile : Screen("profile/{userId}") {
         fun createRoute(userId: String) = "profile/$userId"
     }
-    object EditProfile : Screen("edit_profile/{userId}") { // ✅ Updated with userId parameter
+    object EditProfile : Screen("edit_profile/{userId}") {
         fun createRoute(userId: String) = "edit_profile/$userId"
     }
-    object Feed : Screen("feed")
-    object Community : Screen("community")
+    object Settings : Screen("settings")
 
     // Graph Routes
     object AuthGraph : Screen("auth_graph")
     object MainGraph : Screen("main_graph")
-
-    object Settings : Screen("settings")
 }
-

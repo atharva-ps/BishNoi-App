@@ -68,4 +68,18 @@ interface ApiService {
     @GET("api/search/recent")
     suspend fun getRecentUsers(@Query("limit") limit: Int = 10): Response<SearchUsersResponse>
 
+    // ==================== Settings ====================
+    @GET("api/settings")
+    suspend fun getSettings(): Response<SettingsResponse>
+
+    @PUT("api/settings/privacy")
+    suspend fun updatePrivacySettings(@Body request: UpdatePrivacyRequest): Response<SettingsResponse>
+
+    @PUT("api/settings/communication")
+    suspend fun updateCommunicationSettings(@Body request: UpdateCommunicationRequest): Response<SettingsResponse>
+
+    @PUT("api/settings")
+    suspend fun updateSettings(@Body request: UpdateSettingsRequest): Response<SettingsResponse>
+
+
 }

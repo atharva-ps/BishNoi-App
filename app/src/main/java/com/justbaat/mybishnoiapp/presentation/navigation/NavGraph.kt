@@ -12,6 +12,7 @@ import com.justbaat.mybishnoiapp.presentation.screens.auth.register.RegisterScre
 import com.justbaat.mybishnoiapp.presentation.screens.home.HomeScreen
 import com.justbaat.mybishnoiapp.presentation.screens.profile.ProfileScreen
 import com.justbaat.mybishnoiapp.presentation.screens.profile.EditProfileScreen
+import com.justbaat.mybishnoiapp.presentation.screens.search.SearchScreen
 import com.justbaat.mybishnoiapp.presentation.screens.settings.SettingsScreen
 import com.justbaat.mybishnoiapp.utils.TokenManager
 
@@ -77,10 +78,25 @@ fun NavGraph(
                     },
                     onNavigateToProfile = { userId ->
                         navController.navigate(Screen.Profile.createRoute(userId))
+                    },
+                    onNavigateToSearch = {
+                        navController.navigate(Screen.Search.route)
+                    }
+                )
+            }
+            // In MainGraph, add Search screen:
+            composable(route = Screen.Search.route) {
+                SearchScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToProfile = { userId ->
+                        navController.navigate(Screen.Profile.createRoute(userId))
                     }
                 )
             }
 
+            // Profile Screen
             // Profile Screen
             composable(
                 route = Screen.Profile.route,
@@ -91,11 +107,11 @@ fun NavGraph(
                 )
             ) { backStackEntry ->
                 val userId = backStackEntry.arguments?.getString("userId") ?: ""
-                val currentUserId = tokenManager.getUserId() ?: "" // ✅ Get current user ID
+                val currentUserId = tokenManager.getUserId() ?: ""
 
                 ProfileScreen(
                     userId = userId,
-                    isOwnProfile = userId == currentUserId, // ✅ Check if viewing own profile
+                    isOwnProfile = userId == currentUserId,
                     onNavigateBack = {
                         navController.popBackStack()
                     },
@@ -104,20 +120,34 @@ fun NavGraph(
                     },
                     onNavigateToSettings = {
                         navController.navigate(Screen.Settings.route)
+                    },
+                    onNavigateToHome = { // ✅ Add this
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
                     }
                 )
             }
 
 
 
-            // ✅ Add Settings Screen route
+
+            // Settings Screen
             composable(route = Screen.Settings.route) {
                 SettingsScreen(
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onLogout = { // ✅ Add logout callback
+                        navController.navigate(Screen.AuthGraph.route) {
+                            popUpTo(Screen.MainGraph.route) {
+                                inclusive = true
+                            }
+                        }
                     }
                 )
             }
+
 
 
             // ✅ Edit Profile Screen
