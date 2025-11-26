@@ -6,31 +6,41 @@ import com.justbaat.mybishnoiapp.domain.model.*
 // Response DTO
 data class ProfileResponse(
     val success: Boolean,
-    val user: ProfileDto
+    val user: ProfileDto,
+    val message: String? = null
 )
 
 data class ProfileDto(
     @SerializedName("_id")
     val id: String? = null,
-    val email: String,
-    val firstName: String? = null,
-    val lastName: String? = null,
-    val username: String? = null,
-    val mobileNumber: String? = null,
-    val gender: String? = null,
-    val dob: String? = null,
-    val profilePhoto: String? = null,
-    val aboutMe: String? = null,
-    val coverPhoto: String? = null,
+    val username: String,
+    val firstName: String?,
+    val lastName: String?,
+    val email: String?,
+    val mobileNumber: String?,
+    val gender: String?,
+    val dob: String?,
+    val aboutMe: String?,
+    val profilePhoto: String?,
+    val coverPhoto: String?,
+    val followersCount: Int,
+    val followingCount: Int,
+    val postsCount: Int,
+    val isActive: Boolean,
+    val createdAt: String?,
+    val updatedAt: String?,
+
+    // Privacy fields
+    val isPrivate: Boolean? = null,
+    val isFollowing: Boolean? = null,
+    val canViewPosts: Boolean? = null,
+    val isOwnProfile: Boolean? = null,
+
+    // Nested objects
     val socialMedia: SocialMediaDto? = null,
     val personalDetails: PersonalDetailsDto? = null,
     val address: AddressDto? = null,
-    val professionalDetails: ProfessionalDetailsDto? = null,
-    val followersCount: Int? = null,
-    val followingCount: Int? = null,
-    val postsCount: Int? = null,
-    val isProfileComplete: Boolean? = null,
-    val createdAt: String? = null
+    val professionalDetails: ProfessionalDetailsDto? = null
 )
 
 data class SocialMediaDto(
@@ -105,14 +115,14 @@ data class PhotoUploadResponse(
     val photoUrl: String
 )
 
-// Extension function to convert DTO to Domain model
+// ✅ Extension function to convert DTO to Domain model (FIXED)
 fun ProfileDto.toDomainModel(): Profile {
     return Profile(
         id = id ?: "",
         email = email,
         firstName = firstName ?: "",
         lastName = lastName ?: "",
-        username = username ?: "",
+        username = username,
         mobileNumber = mobileNumber ?: "",
         gender = gender ?: "",
         dob = dob ?: "",
@@ -123,11 +133,16 @@ fun ProfileDto.toDomainModel(): Profile {
         personalDetails = personalDetails?.toDomainModel() ?: PersonalDetails(),
         address = address?.toDomainModel() ?: Address(),
         professionalDetails = professionalDetails?.toDomainModel() ?: ProfessionalDetails(),
-        followersCount = followersCount ?: 0,
-        followingCount = followingCount ?: 0,
-        postsCount = postsCount ?: 0,
-        isProfileComplete = isProfileComplete ?: false,
-        createdAt = createdAt
+        followersCount = followersCount,
+        followingCount = followingCount,
+        postsCount = postsCount,
+        isActive = isActive, // ✅ Added this
+        createdAt = createdAt,
+        // ✅ Privacy fields
+        isPrivate = isPrivate,
+        isFollowing = isFollowing,
+        canViewPosts = canViewPosts,
+        isOwnProfile = isOwnProfile
     )
 }
 

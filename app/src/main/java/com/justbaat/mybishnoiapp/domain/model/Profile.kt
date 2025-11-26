@@ -2,25 +2,31 @@ package com.justbaat.mybishnoiapp.domain.model
 
 data class Profile(
     val id: String,
-    val email: String,
-    val firstName: String = "",
-    val lastName: String = "",
-    val username: String = "",
-    val mobileNumber: String = "",
-    val gender: String = "",
-    val dob: String = "",
-    val profilePhoto: String? = null,
-    val aboutMe: String = "",
-    val coverPhoto: String? = null,
-    val socialMedia: SocialMedia = SocialMedia(),
-    val personalDetails: PersonalDetails = PersonalDetails(),
-    val address: Address = Address(),
-    val professionalDetails: ProfessionalDetails = ProfessionalDetails(),
-    val followersCount: Int = 0,
-    val followingCount: Int = 0,
-    val postsCount: Int = 0,
-    val isProfileComplete: Boolean = false,
-    val createdAt: String? = null
+    val email: String?,
+    val firstName: String,
+    val lastName: String,
+    val username: String,
+    val mobileNumber: String,
+    val gender: String,
+    val dob: String,
+    val profilePhoto: String?,
+    val aboutMe: String,
+    val coverPhoto: String?,
+    val socialMedia: SocialMedia,
+    val personalDetails: PersonalDetails,
+    val address: Address,
+    val professionalDetails: ProfessionalDetails,
+    val followersCount: Int,
+    val followingCount: Int,
+    val postsCount: Int,
+    val isActive: Boolean, // ✅ Added
+    val createdAt: String?,
+
+    // ✅ Privacy fields
+    val isPrivate: Boolean? = null,
+    val isFollowing: Boolean? = null,
+    val canViewPosts: Boolean? = null,
+    val isOwnProfile: Boolean? = null
 )
 
 data class SocialMedia(
@@ -38,8 +44,8 @@ data class PersonalDetails(
 )
 
 data class Relationship(
-    val type: String = "",
-    val name: String = "",
+    val type: String,
+    val name: String,
     val userId: String? = null
 )
 
@@ -71,8 +77,8 @@ data class ProfessionalDetails(
 )
 
 data class Education(
-    val degree: String = "",
-    val institution: String = "",
-    val year: String = "",
-    val fieldOfStudy: String = ""
+    val degree: String,
+    val institution: String,
+    val year: String,
+    val fieldOfStudy: String
 )

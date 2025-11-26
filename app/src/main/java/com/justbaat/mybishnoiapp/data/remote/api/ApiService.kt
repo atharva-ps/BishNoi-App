@@ -81,5 +81,19 @@ interface ApiService {
     @PUT("api/settings")
     suspend fun updateSettings(@Body request: UpdateSettingsRequest): Response<SettingsResponse>
 
+    // ==================== Follow System ====================
+    @POST("api/follow/{userId}/follow")
+    suspend fun followUser(@Path("userId") userId: String): Response<FollowResponse>
 
+    @HTTP(method = "DELETE", path = "api/follow/{userId}/unfollow", hasBody = false)
+    suspend fun unfollowUser(@Path("userId") userId: String): Response<FollowResponse>
+
+    @GET("api/follow/{userId}/followers")
+    suspend fun getFollowers(@Path("userId") userId: String): Response<FollowersResponse>
+
+    @GET("api/follow/{userId}/following")
+    suspend fun getFollowing(@Path("userId") userId: String): Response<FollowingResponse>
+
+    @GET("api/follow/{userId}/status")
+    suspend fun getFollowStatus(@Path("userId") userId: String): Response<FollowStatusResponse>
 }

@@ -1,11 +1,10 @@
 package com.justbaat.mybishnoiapp.presentation.screens.profile
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.justbaat.mybishnoiapp.data.remote.api.ApiService
 import com.justbaat.mybishnoiapp.domain.model.Profile
 import com.justbaat.mybishnoiapp.domain.usecase.profile.GetProfileUseCase
-import com.justbaat.mybishnoiapp.domain.usecase.profile.UpdateBasicInfoUseCase
 import com.justbaat.mybishnoiapp.domain.usecase.profile.UploadCoverPhotoUseCase
 import com.justbaat.mybishnoiapp.domain.usecase.profile.UploadProfilePhotoUseCase
 import com.justbaat.mybishnoiapp.utils.Resource
@@ -21,9 +20,9 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val getProfileUseCase: GetProfileUseCase,
-    private val updateBasicInfoUseCase: UpdateBasicInfoUseCase,
     private val uploadProfilePhotoUseCase: UploadProfilePhotoUseCase,
-    private val uploadCoverPhotoUseCase: UploadCoverPhotoUseCase
+    private val uploadCoverPhotoUseCase: UploadCoverPhotoUseCase,
+    private val apiService: ApiService // ✅ Add for follow operations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -44,6 +43,12 @@ class ProfileViewModel @Inject constructor(
                                 error = null
                             )
                         }
+                        // Load follow status if not own profile
+                        result.data?.let { profile ->
+                            if (profile.isOwnProfile == false) {
+                                checkFollowStatus(userId)
+                            }
+                        }
                     }
                     is Resource.Error -> {
                         _uiState.update {
@@ -58,20 +63,108 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun uploadProfilePhoto(imageFile: File) {
+    // ✅ Check follow status
+    private fun checkFollowStatus(userId: String) {
         viewModelScope.launch {
-            uploadProfilePhotoUseCase(imageFile).collect { result ->
+            try {
+                val response = apiService.getFollowStatus(userId)
+                if (response.isSuccessful && response.body() != null) {
+                    _uiState.update {
+                        it.copy(isFollowing = response.body()!!.isFollowing)
+                    }
+                }
+            } catch (e: Exception) {
+                // Silent fail - not critical
+            }
+        }
+    }
+
+    // ✅ Follow user
+    fun followUser(userId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isFollowLoading = true) }
+
+            try {
+                val response = apiService.followUser(userId)
+                if (response.isSuccessful) {
+                    _uiState.update {
+                        it.copy(
+                            isFollowing = true,
+                            isFollowLoading = false,
+                            // Update follower count
+                            profile = it.profile?.copy(
+                                followersCount = (it.profile.followersCount) + 1
+                            )
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isFollowLoading = false,
+                            error = "Failed to follow user"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isFollowLoading = false,
+                        error = e.message ?: "An error occurred"
+                    )
+                }
+            }
+        }
+    }
+
+    // ✅ Unfollow user
+    fun unfollowUser(userId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isFollowLoading = true) }
+
+            try {
+                val response = apiService.unfollowUser(userId)
+                if (response.isSuccessful) {
+                    _uiState.update {
+                        it.copy(
+                            isFollowing = false,
+                            isFollowLoading = false,
+                            // Update follower count
+                            profile = it.profile?.copy(
+                                followersCount = maxOf((it.profile.followersCount) - 1, 0)
+                            )
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isFollowLoading = false,
+                            error = "Failed to unfollow user"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isFollowLoading = false,
+                        error = e.message ?: "An error occurred"
+                    )
+                }
+            }
+        }
+    }
+
+    fun uploadProfilePhoto(file: File) {
+        viewModelScope.launch {
+            uploadProfilePhotoUseCase(file).collect { result ->
                 when (result) {
                     is Resource.Loading -> {
                         _uiState.update { it.copy(isUploadingProfilePhoto = true) }
                     }
                     is Resource.Success -> {
-                        // ✅ Update profile photo URL immediately
                         _uiState.update {
                             it.copy(
                                 isUploadingProfilePhoto = false,
                                 profile = it.profile?.copy(profilePhoto = result.data),
-                                error = null
                             )
                         }
                     }
@@ -79,7 +172,7 @@ class ProfileViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isUploadingProfilePhoto = false,
-                                error = result.message ?: "Failed to upload photo"
+                                error = result.message ?: "Upload failed"
                             )
                         }
                     }
@@ -88,20 +181,18 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun uploadCoverPhoto(imageFile: File) {
+    fun uploadCoverPhoto(file: File) {
         viewModelScope.launch {
-            uploadCoverPhotoUseCase(imageFile).collect { result ->
+            uploadCoverPhotoUseCase(file).collect { result ->
                 when (result) {
                     is Resource.Loading -> {
                         _uiState.update { it.copy(isUploadingCoverPhoto = true) }
                     }
                     is Resource.Success -> {
-                        // ✅ Update cover photo URL immediately
                         _uiState.update {
                             it.copy(
                                 isUploadingCoverPhoto = false,
                                 profile = it.profile?.copy(coverPhoto = result.data),
-                                error = null
                             )
                         }
                     }
@@ -109,53 +200,7 @@ class ProfileViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isUploadingCoverPhoto = false,
-                                error = result.message ?: "Failed to upload cover photo"
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    fun updateBasicInfo(
-        firstName: String,
-        lastName: String,
-        username: String,
-        mobileNumber: String,
-        gender: String,
-        dob: String,
-        aboutMe: String
-    ) {
-        viewModelScope.launch {
-            updateBasicInfoUseCase(
-                firstName = firstName,
-                lastName = lastName,
-                username = username,
-                mobileNumber = mobileNumber,
-                gender = gender,
-                dob = dob,
-                aboutMe = aboutMe
-            ).collect { result ->
-                when (result) {
-                    is Resource.Loading -> {
-                        _uiState.update { it.copy(isUpdating = true) }
-                    }
-                    is Resource.Success -> {
-                        _uiState.update {
-                            it.copy(
-                                isUpdating = false,
-                                profile = result.data,
-                                updateSuccess = true
-                            )
-                        }
-                    }
-                    is Resource.Error -> {
-                        _uiState.update {
-                            it.copy(
-                                isUpdating = false,
-                                error = result.message ?: "Failed to update profile"
+                                error = result.message ?: "Upload failed"
                             )
                         }
                     }
@@ -167,18 +212,14 @@ class ProfileViewModel @Inject constructor(
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
-
-    fun clearUpdateSuccess() {
-        _uiState.update { it.copy(updateSuccess = false) }
-    }
 }
 
 data class ProfileUiState(
     val isLoading: Boolean = false,
-    val isUpdating: Boolean = false,
+    val profile: Profile? = null,
     val isUploadingProfilePhoto: Boolean = false,
     val isUploadingCoverPhoto: Boolean = false,
-    val profile: Profile? = null,
-    val error: String? = null,
-    val updateSuccess: Boolean = false
+    val isFollowing: Boolean = false, // ✅ Add follow state
+    val isFollowLoading: Boolean = false, // ✅ Add follow loading
+    val error: String? = null
 )

@@ -9,6 +9,8 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.justbaat.mybishnoiapp.presentation.screens.auth.login.LoginScreen
 import com.justbaat.mybishnoiapp.presentation.screens.auth.register.RegisterScreen
+import com.justbaat.mybishnoiapp.presentation.screens.follow.FollowersScreen
+import com.justbaat.mybishnoiapp.presentation.screens.follow.FollowingScreen
 import com.justbaat.mybishnoiapp.presentation.screens.home.HomeScreen
 import com.justbaat.mybishnoiapp.presentation.screens.profile.ProfileScreen
 import com.justbaat.mybishnoiapp.presentation.screens.profile.EditProfileScreen
@@ -97,14 +99,9 @@ fun NavGraph(
             }
 
             // Profile Screen
-            // Profile Screen
             composable(
                 route = Screen.Profile.route,
-                arguments = listOf(
-                    navArgument("userId") {
-                        type = NavType.StringType
-                    }
-                )
+                arguments = listOf(navArgument("userId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val userId = backStackEntry.arguments?.getString("userId") ?: ""
                 val currentUserId = tokenManager.getUserId() ?: ""
@@ -112,25 +109,26 @@ fun NavGraph(
                 ProfileScreen(
                     userId = userId,
                     isOwnProfile = userId == currentUserId,
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    },
+                    onNavigateBack = { navController.popBackStack() },
                     onNavigateToEditProfile = {
                         navController.navigate(Screen.EditProfile.createRoute(userId))
                     },
                     onNavigateToSettings = {
                         navController.navigate(Screen.Settings.route)
                     },
-                    onNavigateToHome = { // ✅ Add this
+                    onNavigateToHome = {
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Home.route) { inclusive = true }
                         }
+                    },
+                    onNavigateToFollowers = { userId ->
+                        navController.navigate(Screen.Followers.createRoute(userId))
+                    },
+                    onNavigateToFollowing = { userId ->
+                        navController.navigate(Screen.Following.createRoute(userId))
                     }
                 )
             }
-
-
-
 
             // Settings Screen
             composable(route = Screen.Settings.route) {
@@ -147,7 +145,6 @@ fun NavGraph(
                     }
                 )
             }
-
 
 
             // ✅ Edit Profile Screen
@@ -167,6 +164,37 @@ fun NavGraph(
                     }
                 )
             }
+
+            // Followers screen
+            composable(
+                route = Screen.Followers.route,
+                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId") ?: ""
+                FollowersScreen(
+                    userId = userId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToProfile = { profileUserId ->
+                        navController.navigate(Screen.Profile.createRoute(profileUserId))
+                    }
+                )
+            }
+
+            // Following screen
+            composable(
+                route = Screen.Following.route,
+                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId") ?: ""
+                FollowingScreen(
+                    userId = userId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToProfile = { profileUserId ->
+                        navController.navigate(Screen.Profile.createRoute(profileUserId))
+                    }
+                )
+            }
+
         }
     }
 }

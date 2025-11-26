@@ -2,9 +2,8 @@ package com.justbaat.mybishnoiapp.presentation.screens.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.justbaat.mybishnoiapp.presentation.components.BottomNavBar
+import com.justbaat.mybishnoiapp.presentation.components.FollowButton
 import com.justbaat.mybishnoiapp.utils.FileUtils
 import com.justbaat.mybishnoiapp.utils.rememberImagePickerLauncher
 
@@ -39,6 +39,8 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToHome: () -> Unit,
+    onNavigateToFollowers: (String) -> Unit,
+    onNavigateToFollowing: (String) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -195,12 +197,37 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Stats Row (Posts, Followers, Following - NO LIKES)
+                        // Stats Row
                         StatsRow(
                             postsCount = uiState.profile?.postsCount ?: 0,
                             followersCount = uiState.profile?.followersCount ?: 0,
-                            followingCount = uiState.profile?.followingCount ?: 0
+                            followingCount = uiState.profile?.followingCount ?: 0,
+                            onFollowersClick = {
+                                onNavigateToFollowers(userId)
+                            },
+                            onFollowingClick = {
+                                onNavigateToFollowing(userId)
+                            }
                         )
+
+                        // Follow Button (only for other users)
+                        if (!isOwnProfile && uiState.profile != null) {
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            FollowButton(
+                                isFollowing = uiState.isFollowing,
+                                isLoading = uiState.isFollowLoading,
+                                onFollowClick = {
+                                    viewModel.followUser(userId)
+                                },
+                                onUnfollowClick = {
+                                    viewModel.unfollowUser(userId)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 32.dp)
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(24.dp))
 
@@ -208,22 +235,65 @@ fun ProfileScreen(
                             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        // ✅ SINGLE Posts Section
+                        if (uiState.profile?.isPrivate == true &&
+                            !uiState.isFollowing &&
+                            !isOwnProfile
+                        ) {
+                            // Private Profile Message
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        // Posts Section Header
-                        Text(
-                            text = "Posts",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            modifier = Modifier.align(Alignment.Start)
-                        )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(24.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            text = "🔒",
+                                            style = MaterialTheme.typography.displayMedium
+                                        )
+                                        Text(
+                                            text = "This Account is Private",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "Follow to see their posts",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            // Posts Section
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Posts",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // Posts Grid Placeholder
+                            PostsGridPlaceholder()
+                        }
                     }
-
-                    // Posts Grid (Placeholder)
-                    PostsGridPlaceholder()
                 }
             }
         }
@@ -350,34 +420,51 @@ fun ProfilePhotoSection(
 fun StatsRow(
     postsCount: Int,
     followersCount: Int,
-    followingCount: Int
+    followingCount: Int,
+    onFollowersClick: () -> Unit,
+    onFollowingClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatItem(count = postsCount, label = "Posts")
+        StatItem(count = postsCount, label = "Posts", onClick = null)
 
         VerticalDivider(
             modifier = Modifier.height(40.dp),
             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
         )
 
-        StatItem(count = followersCount, label = "Followers")
+        StatItem(
+            count = followersCount,
+            label = "Followers",
+            onClick = onFollowersClick
+        )
 
         VerticalDivider(
             modifier = Modifier.height(40.dp),
             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
         )
 
-        StatItem(count = followingCount, label = "Following")
+        StatItem(
+            count = followingCount,
+            label = "Following",
+            onClick = onFollowingClick
+        )
     }
 }
 
 @Composable
-fun StatItem(count: Int, label: String) {
+fun StatItem(
+    count: Int,
+    label: String,
+    onClick: (() -> Unit)?
+) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = if (onClick != null) {
+            Modifier.clickable(onClick = onClick)
+        } else Modifier
     ) {
         Text(
             text = count.toString(),

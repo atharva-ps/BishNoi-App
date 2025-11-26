@@ -19,4 +19,12 @@ sealed class Screen(val route: String) {
     // Graph Routes
     object AuthGraph : Screen("auth_graph")
     object MainGraph : Screen("main_graph")
+
+    object Followers : Screen("followers/{userId}") {
+        fun createRoute(userId: String) = "followers/$userId"
+    }
+    object Following : Screen("following/{userId}") {
+        fun createRoute(userId: String) = "following/$userId"
+    }
+
 }
