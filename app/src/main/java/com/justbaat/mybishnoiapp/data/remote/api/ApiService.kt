@@ -132,4 +132,30 @@ interface ApiService {
     @HTTP(method = "DELETE", path = "api/posts/{postId}/unlike", hasBody = false)
     suspend fun unlikePost(@Path("postId") postId: String): Response<MessageResponse>
 
+    // ==================== Comments ====================
+
+    @POST("api/posts/{postId}/comments")
+    suspend fun addComment(
+        @Path("postId") postId: String,
+        @Body request: AddCommentRequest
+    ): Response<CommentResponse>
+
+    @GET("api/posts/{postId}/comments")
+    suspend fun getComments(
+        @Path("postId") postId: String,
+        @Query("limit") limit: Int = 20
+    ): Response<CommentsListResponse>
+
+    @HTTP(method = "DELETE", path = "api/posts/{postId}/comments/{commentId}", hasBody = false)
+    suspend fun deleteComment(
+        @Path("postId") postId: String,
+        @Path("commentId") commentId: String
+    ): Response<MessageResponse>
+
+
+    // ==================== Delete ====================
+
+    @HTTP(method = "DELETE", path = "api/posts/{postId}", hasBody = false)
+    suspend fun deletePost(@Path("postId") postId: String): Response<MessageResponse>
+
 }

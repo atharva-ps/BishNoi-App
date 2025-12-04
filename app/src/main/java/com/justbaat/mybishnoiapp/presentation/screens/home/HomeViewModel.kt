@@ -180,7 +180,41 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+    // In HomeViewModel.kt
 
+    fun updatePost(updatedPost: Post) {
+        _uiState.update { state ->
+            state.copy(
+                feedPosts = state.feedPosts.map { post ->
+                    if (post.id == updatedPost.id) updatedPost else post
+                }
+            )
+        }
+    }
+    fun deletePost(postId: String) {
+        viewModelScope.launch {
+            try {
+                val response = apiService.deletePost(postId)
+
+                if (response.isSuccessful) {
+                    // Remove post from feed
+                    _uiState.update { state ->
+                        state.copy(
+                            feedPosts = state.feedPosts.filter { it.id != postId }
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(error = "Failed to delete post")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "Error deleting post")
+                }
+            }
+        }
+    }
 }
 
 data class HomeUiState(

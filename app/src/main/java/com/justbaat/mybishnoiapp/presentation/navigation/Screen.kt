@@ -28,5 +28,8 @@ sealed class Screen(val route: String) {
     }
     object CreatePost : Screen("create_post")
 
+    object PostDetail : Screen("post_detail")
+
+
 
 }

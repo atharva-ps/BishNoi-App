@@ -1,18 +1,27 @@
 package com.justbaat.mybishnoiapp.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
+import com.google.gson.Gson
+import com.justbaat.mybishnoiapp.domain.model.Post
 import com.justbaat.mybishnoiapp.presentation.screens.auth.login.LoginScreen
 import com.justbaat.mybishnoiapp.presentation.screens.auth.register.RegisterScreen
 import com.justbaat.mybishnoiapp.presentation.screens.createpost.CreatePostScreen
 import com.justbaat.mybishnoiapp.presentation.screens.follow.FollowersScreen
 import com.justbaat.mybishnoiapp.presentation.screens.follow.FollowingScreen
 import com.justbaat.mybishnoiapp.presentation.screens.home.HomeScreen
+import com.justbaat.mybishnoiapp.presentation.screens.home.HomeViewModel
+import com.justbaat.mybishnoiapp.presentation.screens.postdetail.PostDetailScreen
 import com.justbaat.mybishnoiapp.presentation.screens.profile.ProfileScreen
 import com.justbaat.mybishnoiapp.presentation.screens.profile.EditProfileScreen
 import com.justbaat.mybishnoiapp.presentation.screens.search.SearchScreen
@@ -87,6 +96,11 @@ fun NavGraph(
                     },
                     onNavigateToCreatePost = {
                         navController.navigate(Screen.CreatePost.route)   // ✅ navigate to create post
+                    },
+                    onNavigateToPostDetail = { post ->  // ✅ Add this
+                        val postJson = Gson().toJson(post)
+                        val encodedJson = java.net.URLEncoder.encode(postJson, "UTF-8")
+                        navController.navigate("${Screen.PostDetail.route}/$encodedJson")
                     }
                 )
             }
@@ -209,7 +223,41 @@ fun NavGraph(
                     }
                 )
             }
+            composable(
+                route = "${Screen.PostDetail.route}/{postJson}",
+                arguments = listOf(
+                    navArgument("postJson") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val postJson = backStackEntry.arguments?.getString("postJson") ?: ""
+                val post = try {
+                    Gson().fromJson(postJson, Post::class.java)
+                } catch (e: Exception) {
+                    null
+                }
 
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(Screen.Home.route)
+                }
+                val homeViewModel: HomeViewModel = hiltViewModel(parentEntry)
+
+                // ✅ Fix: Collect state properly instead of using .value
+                val homeUiState by homeViewModel.uiState.collectAsState()
+
+                if (post != null) {
+                    PostDetailScreen(
+                        post = post,
+                        currentUserId = homeUiState.currentUser?.id,  // ✅ Use collected state
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToProfile = { userId ->
+                            navController.navigate(Screen.Profile.createRoute(userId))
+                        },
+                        onDeletePost = {
+                            homeViewModel.deletePost(post.id)
+                        }
+                    )
+                }
+            }
         }
     }
 }

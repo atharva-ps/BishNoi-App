@@ -18,17 +18,30 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.justbaat.mybishnoiapp.domain.model.Post
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun PostCard(
     post: Post,
     modifier: Modifier = Modifier,
+    currentUserId: String? = null,
     onUserClick: (String) -> Unit = {},
     onLikeClick: () -> Unit = {},
     onCommentsClick: () -> Unit = {},
     onMoreClick: () -> Unit = {},
-    onShareClick: () -> Unit = {}
+    onShareClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {},
+
 ) {
+
+    var showMenu by remember { mutableStateOf(false) }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -111,11 +124,54 @@ fun PostCard(
                     )
                 }
 
-                IconButton(onClick = onMoreClick) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More options"
-                    )
+                // ✅ Menu button with dropdown
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More options"
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        // ✅ Show delete only if user owns the post
+                        if (currentUserId == post.userId) {
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                        Text(
+                                            text = "Delete",
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    onDeleteClick()
+                                }
+                            )
+                        }
+
+                        // You can add more menu items here (Report, etc.)
+//                        DropdownMenuItem(
+//                            text = { Text("Share") },
+//                            onClick = {
+//                                showMenu = false
+//                                onShareClick()
+//                            }
+//                        )
+                    }
                 }
             }
 
@@ -146,7 +202,6 @@ fun PostCard(
                 Spacer(modifier = Modifier.height(10.dp))
             }
 
-            // Actions row (like + comments + share)
             // Actions row (like + comments + share)
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -190,13 +245,13 @@ fun PostCard(
                     }
                 }
 
-                // Share
-                Text(
-                    text = "Share",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable { onShareClick() }
-                )
+//                // Share
+//                Text(
+//                    text = "Share",
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = MaterialTheme.colorScheme.primary,
+//                    modifier = Modifier.clickable { onShareClick() }
+//                )
             }
 
 

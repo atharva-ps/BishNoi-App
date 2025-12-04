@@ -18,6 +18,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.justbaat.mybishnoiapp.domain.model.Post
 import com.justbaat.mybishnoiapp.presentation.components.BottomNavBar
 import com.justbaat.mybishnoiapp.presentation.components.PostCard
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.justbaat.mybishnoiapp.presentation.components.DeleteConfirmationDialog
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,12 +31,26 @@ fun HomeScreen(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToSearch: () -> Unit,
     onNavigateToCreatePost: () -> Unit,
+    onNavigateToPostDetail: (Post) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // TODO later: replace with uiState.feedPosts from API
-//    val samplePosts = remember { createDummyPosts() }
+    // ✅ Delete dialog state
+    var postToDelete by remember { mutableStateOf<Post?>(null) }
+
+    // Show delete confirmation dialog
+    postToDelete?.let { post ->
+        DeleteConfirmationDialog(
+            onConfirm = {
+                viewModel.deletePost(post.id)
+                postToDelete = null
+            },
+            onDismiss = {
+                postToDelete = null
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -106,8 +125,11 @@ fun HomeScreen(
                 else -> {
                     HomeFeed(
                         posts = uiState.feedPosts,
+                        currentUserId = uiState.currentUser?.id,
                         onUserClick = onNavigateToProfile,
-                        onToggleLike = { post -> viewModel.toggleLike(post) }  // ✅ Add this
+                        onToggleLike = { post -> viewModel.toggleLike(post) },  // ✅ Add this
+                        onPostClick = onNavigateToPostDetail,
+                        onDeleteClick = { post -> postToDelete = post }  // ✅ Show dialog
                     )
                 }
             }
@@ -118,8 +140,11 @@ fun HomeScreen(
 @Composable
 private fun HomeFeed(
     posts: List<Post>,
+    currentUserId: String?,
     onUserClick: (String) -> Unit,
-    onToggleLike: (Post) -> Unit  // ✅ Add this
+    onPostClick: (Post) -> Unit,
+    onToggleLike: (Post) -> Unit,  // ✅ Add this
+    onDeleteClick: (Post) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -129,8 +154,11 @@ private fun HomeFeed(
         items(posts, key = { it.id }) { post ->
             PostCard(
                 post = post,
+                currentUserId = currentUserId,  // ✅ Pass current user id
                 onUserClick = onUserClick,
-                onLikeClick = { onToggleLike(post) }  // ✅ Wire this
+                onLikeClick = { onToggleLike(post) },  // ✅ Wire this
+                onCommentsClick = { onPostClick(post) },
+                onDeleteClick = { onDeleteClick(post) }  // ✅ Pass delete callback
             )
         }
     }
@@ -203,28 +231,3 @@ private fun EmptyFeedPlaceholder(uiState: HomeUiState) {
     }
 }
 
-// Temporary dummy data; replace with API data later
-//private fun createDummyPosts(): List<Post> = listOf(
-//    Post(
-//        id = "1",
-//        userId = "u1",
-//        username = "Atharva Pratap",
-//        userProfilePhoto = null,
-//        caption = "In 2025, fashion is all about blending sustainability with bold creativity.",
-//        imageUrl = "https://picsum.photos/600/600?random=1",
-//        likesCount = 212,
-//        commentsCount = 20,
-//        createdAt = "12 minutes ago"
-//    ),
-//    Post(
-//        id = "2",
-//        userId = "u2",
-//        username = "Test User",
-//        userProfilePhoto = null,
-//        caption = "Second sample post for layout testing.",
-//        imageUrl = "https://picsum.photos/600/600?random=2",
-//        likesCount = 45,
-//        commentsCount = 3,
-//        createdAt = "1 hour ago"
-//    )
-//)
