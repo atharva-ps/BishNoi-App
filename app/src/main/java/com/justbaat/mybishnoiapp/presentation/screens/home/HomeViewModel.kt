@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.justbaat.mybishnoiapp.data.remote.api.ApiService
 import com.justbaat.mybishnoiapp.data.remote.dto.UserSearchDto
+import com.justbaat.mybishnoiapp.data.remote.dto.toDomain
+import com.justbaat.mybishnoiapp.domain.model.Post
 import com.justbaat.mybishnoiapp.domain.model.User
 import com.justbaat.mybishnoiapp.domain.repository.AuthRepository
 import com.justbaat.mybishnoiapp.utils.Resource
@@ -26,6 +28,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadCurrentUser()
+        loadFeed()
     }
 
     private fun loadCurrentUser() {
@@ -73,6 +76,7 @@ class HomeViewModel @Inject constructor(
                     is Resource.Loading -> {
                         _uiState.update { it.copy(isLoggingOut = true) }
                     }
+
                     is Resource.Success -> {
                         _uiState.update {
                             it.copy(
@@ -81,6 +85,7 @@ class HomeViewModel @Inject constructor(
                             )
                         }
                     }
+
                     is Resource.Error -> {
                         _uiState.update {
                             it.copy(
@@ -94,11 +99,86 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
+
     fun clearSearchResults() {
         _uiState.update { it.copy(searchResults = emptyList()) }
+    }
+
+    fun loadFeed(lastPostId: String? = null) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val response = apiService.getFeed(lastPostId = lastPostId)
+                if (response.isSuccessful && response.body()?.success == true) {
+
+                    // ✅ map DTO -> domain here
+                    val dtoPosts = response.body()!!.posts
+                    val domainPosts = dtoPosts.map { it.toDomain() }
+
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            feedPosts = if (lastPostId == null) {
+                                domainPosts
+                            } else {
+                                it.feedPosts + domainPosts
+                            }
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = response.body()?.message ?: "Failed to load feed"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Unexpected error"
+                    )
+                }
+            }
+        }
+    }
+    fun toggleLike(post: Post) {
+        viewModelScope.launch {
+            try {
+                val response = if (post.isLikedByCurrentUser) {
+                    apiService.unlikePost(post.id)
+                } else {
+                    apiService.likePost(post.id)
+                }
+
+                if (response.isSuccessful) {
+                    // Optimistically update UI
+                    _uiState.update { state ->
+                        state.copy(
+                            feedPosts = state.feedPosts.map { p ->
+                                if (p.id == post.id) {
+                                    p.copy(
+                                        isLikedByCurrentUser = !post.isLikedByCurrentUser,
+                                        likesCount = if (post.isLikedByCurrentUser) {
+                                            maxOf(p.likesCount - 1, 0)
+                                        } else {
+                                            p.likesCount + 1
+                                        }
+                                    )
+                                } else p
+                            }
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                println("❌ Like toggle error: ${e.message}")
+            }
+        }
     }
 
 }
@@ -109,5 +189,7 @@ data class HomeUiState(
     val isLoggedOut: Boolean = false,
     val isSearching: Boolean = false, // ✅ Add this
     val searchResults: List<UserSearchDto> = emptyList(), // ✅ Add this
-    val error: String? = null
+    val error: String? = null,
+    val feedPosts: List<Post> = emptyList(),
+    val isLoading: Boolean = false,
 )

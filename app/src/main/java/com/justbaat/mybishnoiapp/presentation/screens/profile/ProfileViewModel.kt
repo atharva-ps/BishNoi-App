@@ -3,6 +3,8 @@ package com.justbaat.mybishnoiapp.presentation.screens.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.justbaat.mybishnoiapp.data.remote.api.ApiService
+import com.justbaat.mybishnoiapp.data.remote.dto.toDomain
+import com.justbaat.mybishnoiapp.domain.model.Post
 import com.justbaat.mybishnoiapp.domain.model.Profile
 import com.justbaat.mybishnoiapp.domain.usecase.profile.GetProfileUseCase
 import com.justbaat.mybishnoiapp.domain.usecase.profile.UploadCoverPhotoUseCase
@@ -209,6 +211,43 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+
+    fun loadUserPosts(userId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingPosts = true) }
+
+            try {
+                val response = apiService.getUserPosts(userId)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val dtoPosts = response.body()!!.posts
+                    val domainPosts = dtoPosts.map { it.toDomain() }
+
+                    _uiState.update {
+                        it.copy(
+                            userPosts = domainPosts,
+                            isLoadingPosts = false
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isLoadingPosts = false,
+                            error = "Failed to load posts"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoadingPosts = false,
+                        error = e.message ?: "Error loading posts"
+                    )
+                }
+            }
+        }
+    }
+
+
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
@@ -221,5 +260,7 @@ data class ProfileUiState(
     val isUploadingCoverPhoto: Boolean = false,
     val isFollowing: Boolean = false, // ✅ Add follow state
     val isFollowLoading: Boolean = false, // ✅ Add follow loading
-    val error: String? = null
+    val error: String? = null,
+    val userPosts: List<Post> = emptyList(),        // ✅ Add this
+    val isLoadingPosts: Boolean = false,
 )

@@ -9,6 +9,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.justbaat.mybishnoiapp.presentation.screens.auth.login.LoginScreen
 import com.justbaat.mybishnoiapp.presentation.screens.auth.register.RegisterScreen
+import com.justbaat.mybishnoiapp.presentation.screens.createpost.CreatePostScreen
 import com.justbaat.mybishnoiapp.presentation.screens.follow.FollowersScreen
 import com.justbaat.mybishnoiapp.presentation.screens.follow.FollowingScreen
 import com.justbaat.mybishnoiapp.presentation.screens.home.HomeScreen
@@ -83,9 +84,13 @@ fun NavGraph(
                     },
                     onNavigateToSearch = {
                         navController.navigate(Screen.Search.route)
+                    },
+                    onNavigateToCreatePost = {
+                        navController.navigate(Screen.CreatePost.route)   // ✅ navigate to create post
                     }
                 )
             }
+
             // In MainGraph, add Search screen:
             composable(route = Screen.Search.route) {
                 SearchScreen(
@@ -191,6 +196,16 @@ fun NavGraph(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToProfile = { profileUserId ->
                         navController.navigate(Screen.Profile.createRoute(profileUserId))
+                    }
+                )
+            }
+            composable(Screen.CreatePost.route) {
+                CreatePostScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onPostCreated = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
                     }
                 )
             }

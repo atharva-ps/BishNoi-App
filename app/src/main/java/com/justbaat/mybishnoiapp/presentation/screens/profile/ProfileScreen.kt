@@ -25,10 +25,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.justbaat.mybishnoiapp.domain.model.Post
 import com.justbaat.mybishnoiapp.presentation.components.BottomNavBar
 import com.justbaat.mybishnoiapp.presentation.components.FollowButton
 import com.justbaat.mybishnoiapp.utils.FileUtils
 import com.justbaat.mybishnoiapp.utils.rememberImagePickerLauncher
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +69,7 @@ fun ProfileScreen(
     // Load profile
     LaunchedEffect(userId) {
         viewModel.loadProfile(userId)
+        viewModel.loadUserPosts(userId)
     }
 
     // Show error snackbar
@@ -290,8 +296,24 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // Posts Grid Placeholder
-                            PostsGridPlaceholder()
+                            // ✅ REAL Posts Grid
+                            if (uiState.isLoadingPosts) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            } else if (uiState.userPosts.isEmpty()) {
+                                PostsGridPlaceholder()
+                            } else {
+                                PostsGrid(
+                                    posts = uiState.userPosts,
+                                    onPostClick = { /* TODO: navigate to post detail */ }
+                                )
+                            }
                         }
                     }
                 }
@@ -513,3 +535,46 @@ fun PostsGridPlaceholder() {
         }
     }
 }
+
+@Composable
+fun PostsGrid(
+    posts: List<Post>,
+    onPostClick: (Post) -> Unit = {}
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        val chunkedPosts = posts.chunked(3)
+
+        chunkedPosts.forEach { rowPosts ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                rowPosts.forEach { post ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clickable { onPostClick(post) }
+                    ) {
+                        AsyncImage(
+                            model = post.imageUrl,
+                            contentDescription = "Post",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+
+                // Fill remaining cells if less than 3
+                repeat(3 - rowPosts.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+

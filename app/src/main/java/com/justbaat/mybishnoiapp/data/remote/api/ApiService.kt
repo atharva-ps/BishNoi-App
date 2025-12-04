@@ -3,6 +3,7 @@ package com.justbaat.mybishnoiapp.data.remote.api
 import com.justbaat.mybishnoiapp.data.remote.dto.*
 import okhttp3.MultipartBody
 import retrofit2.Response
+import okhttp3.RequestBody
 import retrofit2.http.*
 
 interface ApiService {
@@ -96,4 +97,39 @@ interface ApiService {
 
     @GET("api/follow/{userId}/status")
     suspend fun getFollowStatus(@Path("userId") userId: String): Response<FollowStatusResponse>
+
+    // ==================== Posts ====================
+
+    // Multipart create post: image + caption + visibility
+    @Multipart
+    @POST("api/posts")
+    suspend fun createPost(
+        @Part image: MultipartBody.Part,
+        @Part("caption") caption: RequestBody,
+        @Part("visibility") visibility: RequestBody
+    ): retrofit2.Response<PostResponse>
+
+    // Get home feed
+    @GET("api/posts/feed")
+    suspend fun getFeed(
+        @Query("lastPostId") lastPostId: String? = null,
+        @Query("limit") limit: Int = 10
+    ): retrofit2.Response<FeedResponse>
+
+    // Get posts for profile (will use later)
+    @GET("api/posts/user/{userId}")
+    suspend fun getUserPosts(
+        @Path("userId") userId: String,
+        @Query("lastPostId") lastPostId: String? = null,
+        @Query("limit") limit: Int = 12
+    ): Response<FeedResponse>
+
+    // ==================== Post Interactions ====================
+
+    @POST("api/posts/{postId}/like")
+    suspend fun likePost(@Path("postId") postId: String): Response<MessageResponse>
+
+    @HTTP(method = "DELETE", path = "api/posts/{postId}/unlike", hasBody = false)
+    suspend fun unlikePost(@Path("postId") postId: String): Response<MessageResponse>
+
 }
