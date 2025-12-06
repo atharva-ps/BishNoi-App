@@ -10,5 +10,7 @@ data class Post(
     val likesCount: Int,
     val commentsCount: Int,
     val createdAt: String?,         // formatted time string later
-    val isLikedByCurrentUser: Boolean = false
+    val isLikedByCurrentUser: Boolean = false,
+    val isAdmin: Boolean = false,
+    val postedBy: String = "User"  // ✅ Default value
 )

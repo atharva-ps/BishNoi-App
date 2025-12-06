@@ -30,7 +30,9 @@ data class PostDto(
     val isActive: Boolean,
     val createdAt: String?,
     val updatedAt: String?,
-    val isLikedByCurrentUser: Boolean = false
+    val isLikedByCurrentUser: Boolean = false,
+    val isAdmin: Boolean = false,
+    val postedBy: String? = null
 )
 
 fun PostDto.toDomain(): Post = Post(
@@ -43,7 +45,9 @@ fun PostDto.toDomain(): Post = Post(
     likesCount = likesCount,
     commentsCount = commentsCount,
     createdAt = createdAt?.substring(0, 10) ?: "",  // e.g. "2025-12-02",
-    isLikedByCurrentUser = isLikedByCurrentUser
+    isLikedByCurrentUser = isLikedByCurrentUser,
+    isAdmin = isAdmin,
+    postedBy = postedBy ?: "User"
 )
 
 fun PostDto.toProfilePost() = ProfilePost(

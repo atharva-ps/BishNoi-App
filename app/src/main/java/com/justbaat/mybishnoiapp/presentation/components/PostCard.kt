@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun PostCard(
@@ -268,5 +269,44 @@ fun PostCard(
                 )
             }
         }
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = post.username ?: "User",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+
+                // ✅ Just check what backend sent - no frontend logic
+                if (post.postedBy == "Admin") {
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = Color(0xFFFFD700),
+                        modifier = Modifier.padding(start = 4.dp)
+                    ) {
+                        Text(
+                            text = "👑 ADMIN",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Black,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = post.createdAt ?: "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
     }
 }
