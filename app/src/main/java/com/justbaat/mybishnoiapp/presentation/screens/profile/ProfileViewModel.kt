@@ -99,6 +99,8 @@ class ProfileViewModel @Inject constructor(
                             )
                         )
                     }
+                    // ✅ Reload profile to get updated privacy permissions
+                    loadProfile(userId)
                 } else {
                     _uiState.update {
                         it.copy(
@@ -136,6 +138,8 @@ class ProfileViewModel @Inject constructor(
                             )
                         )
                     }
+                    // ✅ Reload profile to get updated privacy permissions
+                    loadProfile(userId)
                 } else {
                     _uiState.update {
                         it.copy(

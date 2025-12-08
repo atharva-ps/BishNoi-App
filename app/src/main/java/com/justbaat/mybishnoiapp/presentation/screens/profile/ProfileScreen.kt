@@ -32,7 +32,7 @@ import com.justbaat.mybishnoiapp.utils.FileUtils
 import com.justbaat.mybishnoiapp.utils.rememberImagePickerLauncher
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.GridCells
-
+import com.justbaat.mybishnoiapp.presentation.components.ProfileInfoSection
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +69,7 @@ fun ProfileScreen(
     // Load profile
     LaunchedEffect(userId) {
         viewModel.loadProfile(userId)
-        viewModel.loadUserPosts(userId)
+//        viewModel.loadUserPosts(userId)
     }
 
     // Show error snackbar
@@ -235,86 +235,104 @@ fun ProfileScreen(
                             )
                         }
 
+                        // After Follow Button section:
+
                         Spacer(modifier = Modifier.height(24.dp))
 
                         HorizontalDivider(
                             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                         )
 
-                        // ✅ SINGLE Posts Section
-                        if (uiState.profile?.isPrivate == true &&
-                            !uiState.isFollowing &&
-                            !isOwnProfile
-                        ) {
-                            // Private Profile Message
-                            Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                    )
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(24.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = "🔒",
-                                            style = MaterialTheme.typography.displayMedium
-                                        )
-                                        Text(
-                                            text = "This Account is Private",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = "Follow to see their posts",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                        } else {
-                            // Posts Section
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = "Posts",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                ),
-                                modifier = Modifier.align(Alignment.Start)
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // ✅ REAL Posts Grid
-                            if (uiState.isLoadingPosts) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator()
-                                }
-                            } else if (uiState.userPosts.isEmpty()) {
-                                PostsGridPlaceholder()
-                            } else {
-                                PostsGrid(
-                                    posts = uiState.userPosts,
-                                    onPostClick = { /* TODO: navigate to post detail */ }
-                                )
-                            }
+                        // ✅ Profile Info Cards (only show if profile data exists)
+                        uiState.profile?.let { profile ->
+                            ProfileInfoSection(profile = profile)
                         }
+
+                        Spacer(modifier = Modifier.height(100.dp))
+
+
+//                        Spacer(modifier = Modifier.height(24.dp))
+//
+//                        HorizontalDivider(
+//                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+//                        )
+//
+//                        // ✅ SINGLE Posts Section
+//                        if (uiState.profile?.isPrivate == true &&
+//                            !uiState.isFollowing &&
+//                            !isOwnProfile
+//                        ) {
+//                            // Private Profile Message
+//                            Spacer(modifier = Modifier.height(16.dp))
+//
+//                            Box(
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .padding(horizontal = 16.dp),
+//                                contentAlignment = Alignment.Center
+//                            ) {
+//                                Card(
+//                                    colors = CardDefaults.cardColors(
+//                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+//                                    )
+//                                ) {
+//                                    Column(
+//                                        modifier = Modifier.padding(24.dp),
+//                                        horizontalAlignment = Alignment.CenterHorizontally,
+//                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+//                                    ) {
+//                                        Text(
+//                                            text = "🔒",
+//                                            style = MaterialTheme.typography.displayMedium
+//                                        )
+//                                        Text(
+//                                            text = "This Account is Private",
+//                                            style = MaterialTheme.typography.titleMedium,
+//                                            fontWeight = FontWeight.Bold
+//                                        )
+//                                        Text(
+//                                            text = "Follow to see their posts",
+//                                            style = MaterialTheme.typography.bodyMedium,
+//                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+//                                        )
+//                                    }
+//                                }
+//                            }
+//                        } else {
+//                            // Posts Section
+//                            Spacer(modifier = Modifier.height(16.dp))
+//
+//                            Text(
+//                                text = "Posts",
+//                                style = MaterialTheme.typography.titleMedium.copy(
+//                                    fontWeight = FontWeight.SemiBold
+//                                ),
+//                                modifier = Modifier.align(Alignment.Start)
+//                            )
+//
+//                            Spacer(modifier = Modifier.height(12.dp))
+//
+//                            // ✅ REAL Posts Grid
+//                            if (uiState.isLoadingPosts) {
+//                                Box(
+//                                    modifier = Modifier
+//                                        .fillMaxWidth()
+//                                        .height(200.dp),
+//                                    contentAlignment = Alignment.Center
+//                                ) {
+//                                    CircularProgressIndicator()
+//                                }
+//                            } else if (uiState.userPosts.isEmpty()) {
+//                                PostsGridPlaceholder()
+//                            } else {
+//                                PostsGrid(
+//                                    posts = uiState.userPosts,
+//                                    onPostClick = { /* TODO: navigate to post detail */ }
+//                                )
+//                            }
+//                        }
                     }
                 }
             }

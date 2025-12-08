@@ -1,4 +1,4 @@
-package com.justbaat.mybishnoiapp.presentation.screens.profile
+package com.justbaat.mybishnoiapp.presentation.screens.profile.tabs
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +14,9 @@ import com.justbaat.mybishnoiapp.domain.model.Relationship
 import com.justbaat.mybishnoiapp.presentation.components.MaritalStatusDropdown
 import com.justbaat.mybishnoiapp.presentation.components.ProfileTextField
 import com.justbaat.mybishnoiapp.presentation.components.RelationshipCard
+import com.justbaat.mybishnoiapp.presentation.components.RelationshipTypeDropdown
+import com.justbaat.mybishnoiapp.presentation.screens.profile.EditProfileUiState
+import com.justbaat.mybishnoiapp.presentation.screens.profile.EditProfileViewModel
 
 @Composable
 fun PersonalDetailsTab(
@@ -180,7 +183,7 @@ fun AddRelationshipDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Relationship Type Dropdown
-                com.justbaat.mybishnoiapp.presentation.components.RelationshipTypeDropdown(
+                RelationshipTypeDropdown(
                     selectedType = relationshipType,
                     onTypeSelected = { relationshipType = it }
                 )
