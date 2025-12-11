@@ -26,6 +26,7 @@ import com.justbaat.mybishnoiapp.presentation.screens.home.HomeViewModel
 fun SearchScreen(
     onNavigateBack: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
+    onNavigateToMembers: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -75,6 +76,7 @@ fun SearchScreen(
             BottomNavBar(
                 selectedRoute = "",
                 onHomeClick = onNavigateBack,
+                onMembersClick = onNavigateToMembers,
                 onCreatePostClick = { /* TODO */ },
                 onProfileClick = {
                     uiState.currentUser?.id?.let { onNavigateToProfile(it) }

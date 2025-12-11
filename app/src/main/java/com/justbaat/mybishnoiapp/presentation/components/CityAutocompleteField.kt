@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 fun CityAutocompleteField(
     value: String,
     onValueChange: (String) -> Unit,
+    onPlaceSelected: ((city: String, state: String, country: String) -> Unit)? = null,
     label: String,
     modifier: Modifier = Modifier,
     placeholder: String = "Search city...",
@@ -34,6 +35,13 @@ fun CityAutocompleteField(
 
     val scope = rememberCoroutineScope()
     var searchJob: Job? by remember { mutableStateOf(null) }
+
+    // Update query when value changes externally
+    LaunchedEffect(value) {
+        if (value != query) {
+            query = value
+        }
+    }
 
     Column(modifier = modifier) {
         OutlinedTextField(
@@ -120,6 +128,14 @@ fun CityAutocompleteField(
                                 onClick = {
                                     query = prediction.primaryText
                                     onValueChange(prediction.primaryText)
+
+                                    // Notify parent about selected place with state and country
+                                    onPlaceSelected?.invoke(
+                                        prediction.city,
+                                        prediction.state,
+                                        prediction.country
+                                    )
+
                                     showDropdown = false
                                     predictions = emptyList()
                                 }

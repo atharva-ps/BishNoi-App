@@ -44,6 +44,8 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToHome: () -> Unit,
+    onNavigateToMembers: () -> Unit,  // ✅ Add
+    onNavigateToCreatePost: () -> Unit,
     onNavigateToFollowers: (String) -> Unit,
     onNavigateToFollowing: (String) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
@@ -117,7 +119,8 @@ fun ProfileScreen(
             BottomNavBar(
                 selectedRoute = "profile",
                 onHomeClick = onNavigateToHome,
-                onCreatePostClick = { /* TODO */ },
+                onMembersClick = onNavigateToMembers,
+                onCreatePostClick = onNavigateToCreatePost,
                 onProfileClick = { /* Already on profile */ }
             )
         },

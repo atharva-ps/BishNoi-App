@@ -101,6 +101,20 @@ interface ApiService {
     // ==================== Posts ====================
 
     // Multipart create post: image + caption + visibility
+
+    @GET("api/posts/presigned-url")
+    suspend fun getPresignedUrl(
+        @Query("filename") filename: String
+    ): Response<PresignedUrlResponse>
+
+    @FormUrlEncoded
+    @POST("api/posts/create-with-url")
+    suspend fun createPostWithUrl(
+        @Field("imageUrl") imageUrl: String,
+        @Field("caption") caption: String,
+        @Field("visibility") visibility: String
+    ): Response<CreatePostResponse>
+
     @Multipart
     @POST("api/posts")
     suspend fun createPost(
@@ -157,5 +171,18 @@ interface ApiService {
 
     @HTTP(method = "DELETE", path = "api/posts/{postId}", hasBody = false)
     suspend fun deletePost(@Path("postId") postId: String): Response<MessageResponse>
+
+    // ==================== Members ====================
+
+    @GET("api/members")
+    suspend fun getAllMembers(
+        @Query("search") search: String = "",
+        @Query("state") state: String = "",
+        @Query("limit") limit: Int = 50,
+        @Query("lastUserId") lastUserId: String = ""
+    ): Response<MembersResponse>
+
+    @GET("api/members/states")
+    suspend fun getAllStates(): Response<StatesResponse>
 
 }

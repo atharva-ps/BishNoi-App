@@ -32,6 +32,7 @@ fun HomeScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToCreatePost: () -> Unit,
     onNavigateToPostDetail: (Post) -> Unit,
+    onNavigateToMembers: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -100,6 +101,7 @@ fun HomeScreen(
             BottomNavBar(
                 selectedRoute = "home",
                 onHomeClick = { /* Already on home */ },
+                onMembersClick = onNavigateToMembers,
                 onCreatePostClick = onNavigateToCreatePost,
                 onProfileClick = {
                     uiState.currentUser?.id?.let { onNavigateToProfile(it) }

@@ -21,6 +21,7 @@ import com.justbaat.mybishnoiapp.presentation.screens.follow.FollowersScreen
 import com.justbaat.mybishnoiapp.presentation.screens.follow.FollowingScreen
 import com.justbaat.mybishnoiapp.presentation.screens.home.HomeScreen
 import com.justbaat.mybishnoiapp.presentation.screens.home.HomeViewModel
+import com.justbaat.mybishnoiapp.presentation.screens.members.MembersScreen
 import com.justbaat.mybishnoiapp.presentation.screens.postdetail.PostDetailScreen
 import com.justbaat.mybishnoiapp.presentation.screens.profile.ProfileScreen
 import com.justbaat.mybishnoiapp.presentation.screens.profile.EditProfileScreen
@@ -101,6 +102,9 @@ fun NavGraph(
                         val postJson = Gson().toJson(post)
                         val encodedJson = java.net.URLEncoder.encode(postJson, "UTF-8")
                         navController.navigate("${Screen.PostDetail.route}/$encodedJson")
+                    },
+                    onNavigateToMembers = {  // ✅ Add this
+                        navController.navigate(Screen.Members.route)
                     }
                 )
             }
@@ -110,6 +114,9 @@ fun NavGraph(
                 SearchScreen(
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onNavigateToMembers = {  // ✅ Add this
+                        navController.navigate(Screen.Members.route)
                     },
                     onNavigateToProfile = { userId ->
                         navController.navigate(Screen.Profile.createRoute(userId))
@@ -145,6 +152,12 @@ fun NavGraph(
                     },
                     onNavigateToFollowing = { userId ->
                         navController.navigate(Screen.Following.createRoute(userId))
+                    },
+                    onNavigateToMembers = {  // ✅ Add
+                        navController.navigate(Screen.Members.route)
+                    },
+                    onNavigateToCreatePost = {  // ✅ Add
+                        navController.navigate(Screen.CreatePost.route)
                     }
                 )
             }
@@ -164,6 +177,30 @@ fun NavGraph(
                     }
                 )
             }
+
+            // ✅ Members Screen
+            composable(route = Screen.Members.route) {
+                MembersScreen(
+                    onNavigateToHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToCreatePost = {
+                        navController.navigate(Screen.CreatePost.route)
+                    },
+                    onNavigateToProfile = { userId ->
+                        if (userId.isEmpty()) {
+                            // Navigate to own profile
+                            val currentUserId = tokenManager.getUserId() ?: ""
+                            navController.navigate(Screen.Profile.createRoute(currentUserId))
+                        } else {
+                            navController.navigate(Screen.Profile.createRoute(userId))
+                        }
+                    }
+                )
+            }
+
 
 
             // ✅ Edit Profile Screen
@@ -248,7 +285,10 @@ fun NavGraph(
                     PostDetailScreen(
                         post = post,
                         currentUserId = homeUiState.currentUser?.id,  // ✅ Use collected state
-                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateBack = { updatedPost ->  // ✅ Receive updated post
+                            homeViewModel.updatePost(updatedPost)  // ✅ Update in HomeViewModel
+                            navController.popBackStack()
+                        },
                         onNavigateToProfile = { userId ->
                             navController.navigate(Screen.Profile.createRoute(userId))
                         },

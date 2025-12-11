@@ -54,6 +54,16 @@ fun AddressTab(
                     uiState.currentAddress.copy(city = it)
                 )
             },
+            onPlaceSelected = { city, state, country ->
+                // Auto-fill city, state, and country when a place is selected
+                viewModel.updateCurrentAddress(
+                    uiState.currentAddress.copy(
+                        city = city,
+                        state = state,
+                        country = country
+                    )
+                )
+            },
             label = "City",
             placeholder = "Search for your city"
         )
@@ -117,6 +127,16 @@ fun AddressTab(
             onValueChange = {
                 viewModel.updateNativeAddress(
                     uiState.nativeAddress.copy(city = it)
+                )
+            },
+            onPlaceSelected = { city, state, country ->
+                // Auto-fill city, state, and country when a place is selected
+                viewModel.updateNativeAddress(
+                    uiState.nativeAddress.copy(
+                        city = city,
+                        state = state,
+                        country = country
+                    )
                 )
             },
             label = "City",

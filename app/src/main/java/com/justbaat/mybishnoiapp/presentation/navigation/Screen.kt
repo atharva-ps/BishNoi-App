@@ -30,6 +30,8 @@ sealed class Screen(val route: String) {
 
     object PostDetail : Screen("post_detail")
 
+    object Members : Screen("members")
+
 
 
 }

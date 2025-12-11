@@ -17,6 +17,20 @@ data class FeedResponse(
     val message: String? = null
 )
 
+data class PresignedUrlResponse(
+    val success: Boolean,
+    val uploadUrl: String,
+    val fileUrl: String,
+    val key: String
+)
+
+data class CreatePostResponse(
+    val success: Boolean,
+    val message: String,
+    val post: Post?
+)
+
+
 data class PostDto(
     val id: String,
     val userId: String,
