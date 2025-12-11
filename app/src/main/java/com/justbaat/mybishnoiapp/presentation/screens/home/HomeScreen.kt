@@ -1,5 +1,6 @@
 package com.justbaat.mybishnoiapp.presentation.screens.home
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,6 +22,7 @@ import com.justbaat.mybishnoiapp.presentation.components.PostCard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import com.justbaat.mybishnoiapp.presentation.components.DeleteConfirmationDialog
 
 
@@ -36,6 +38,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     // ✅ Delete dialog state
     var postToDelete by remember { mutableStateOf<Post?>(null) }
@@ -79,7 +82,15 @@ fun HomeScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        IconButton(onClick = { /* TODO: notifications */ }) {
+                        IconButton(
+                            onClick = {
+                                Toast.makeText(
+                                    context,
+                                    "Coming soon",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
                                 contentDescription = "Notifications",
