@@ -3,6 +3,7 @@ package com.justbaat.mybishnoiapp.presentation.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.justbaat.mybishnoiapp.data.remote.api.ApiService
+import com.justbaat.mybishnoiapp.data.remote.dto.ReportRequest
 import com.justbaat.mybishnoiapp.data.remote.dto.UserSearchDto
 import com.justbaat.mybishnoiapp.data.remote.dto.toDomain
 import com.justbaat.mybishnoiapp.domain.model.Post
@@ -212,6 +213,34 @@ class HomeViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(error = e.message ?: "Error deleting post")
                 }
+            }
+        }
+    }
+    fun reportPost(
+        post: Post,
+        reportType: String,
+        message: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val request = ReportRequest(
+                    reportType = reportType,
+                    message = message,
+                    reportedPostId = post.id,
+                    reportedUserId = post.userId
+                )
+
+                val response = apiService.submitReport(request)
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    onSuccess()
+                } else {
+                    onError(response.body()?.message ?: "Failed to submit report")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "An error occurred")
             }
         }
     }

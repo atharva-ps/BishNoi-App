@@ -209,4 +209,11 @@ interface ApiService {
     @GET("api/members/states")
     suspend fun getAllStates(): Response<StatesResponse>
 
+
+    // ==================== Report API ====================
+    @POST("api/reports")
+    suspend fun submitReport(
+        @Body request: ReportRequest
+    ): Response<ReportResponse>
+
 }

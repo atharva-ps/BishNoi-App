@@ -73,3 +73,15 @@ data class MessageResponse(
     val success: Boolean,
     val message: String
 )
+
+data class ReportRequest(
+    val reportType: String,
+    val message: String,
+    val reportedPostId: String,
+    val reportedUserId: String
+)
+
+data class ReportResponse(
+    val success: Boolean,
+    val message: String
+)

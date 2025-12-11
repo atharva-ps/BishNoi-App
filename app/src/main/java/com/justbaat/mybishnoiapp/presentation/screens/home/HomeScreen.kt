@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.justbaat.mybishnoiapp.presentation.components.DeleteConfirmationDialog
+import com.justbaat.mybishnoiapp.presentation.components.ReportBottomSheet
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +44,9 @@ fun HomeScreen(
     // ✅ Delete dialog state
     var postToDelete by remember { mutableStateOf<Post?>(null) }
 
+    // ✅ Report sheet state
+    var postToReport by remember { mutableStateOf<Post?>(null) }
+
     // Show delete confirmation dialog
     postToDelete?.let { post ->
         DeleteConfirmationDialog(
@@ -53,6 +57,31 @@ fun HomeScreen(
             onDismiss = {
                 postToDelete = null
             }
+        )
+    }
+    // ✅ Show report bottom sheet
+    postToReport?.let { post ->
+        ReportBottomSheet(
+            onDismiss = { postToReport = null },
+            onSubmitReport = { reportType, message ->
+                viewModel.reportPost(
+                    post = post,
+                    reportType = reportType,
+                    message = message,
+                    onSuccess = {
+                        postToReport = null
+                        Toast.makeText(
+                            context,
+                            "Report submitted successfully",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    },
+                    onError = { error ->
+                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            isLoading = false
         )
     }
 
@@ -142,7 +171,8 @@ fun HomeScreen(
                         onUserClick = onNavigateToProfile,
                         onToggleLike = { post -> viewModel.toggleLike(post) },  // ✅ Add this
                         onPostClick = onNavigateToPostDetail,
-                        onDeleteClick = { post -> postToDelete = post }  // ✅ Show dialog
+                        onDeleteClick = { post -> postToDelete = post },  // ✅ Show dialog
+                        onReportClick = { post -> postToReport = post }
                     )
                 }
             }
@@ -157,7 +187,8 @@ private fun HomeFeed(
     onUserClick: (String) -> Unit,
     onPostClick: (Post) -> Unit,
     onToggleLike: (Post) -> Unit,  // ✅ Add this
-    onDeleteClick: (Post) -> Unit
+    onDeleteClick: (Post) -> Unit,
+    onReportClick: (Post) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -171,7 +202,8 @@ private fun HomeFeed(
                 onUserClick = onUserClick,
                 onLikeClick = { onToggleLike(post) },  // ✅ Wire this
                 onCommentsClick = { onPostClick(post) },
-                onDeleteClick = { onDeleteClick(post) }  // ✅ Pass delete callback
+                onDeleteClick = { onDeleteClick(post) },  // ✅ Pass delete callback
+                onReportClick = { onReportClick(post) }
             )
         }
     }

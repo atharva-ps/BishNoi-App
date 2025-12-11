@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.justbaat.mybishnoiapp.domain.model.Post
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Report
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.getValue
@@ -38,8 +39,9 @@ fun PostCard(
     onMoreClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
+    onReportClick: () -> Unit = {},
 
-) {
+    ) {
 
     var showMenu by remember { mutableStateOf(false) }
 
@@ -162,16 +164,31 @@ fun PostCard(
                                     onDeleteClick()
                                 }
                             )
+                        } else {
+                            // ✅ Show REPORT for other users' posts
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Report,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                        Text(
+                                            text = "Report",
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    onReportClick()
+                                }
+                            )
                         }
-
-                        // You can add more menu items here (Report, etc.)
-//                        DropdownMenuItem(
-//                            text = { Text("Share") },
-//                            onClick = {
-//                                showMenu = false
-//                                onShareClick()
-//                            }
-//                        )
                     }
                 }
             }
