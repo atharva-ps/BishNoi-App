@@ -24,6 +24,30 @@ interface ApiService {
 
     // ==================== Profile ====================
 
+    // ✅ NEW: Presigned URL methods
+    @GET("api/profile/presigned-url-profile")
+    suspend fun getPresignedUrlProfile(
+        @Query("filename") filename: String
+    ): Response<PresignedUrlResponse>
+
+    @GET("api/profile/presigned-url-cover")
+    suspend fun getPresignedUrlCover(
+        @Query("filename") filename: String
+    ): Response<PresignedUrlResponse>
+
+    // ✅ NEW: Upload with URL methods
+    @FormUrlEncoded
+    @POST("api/profile/profile-photo-url")
+    suspend fun uploadProfilePhotoWithUrl(
+        @Field("photoUrl") photoUrl: String
+    ): Response<PhotoUploadResponse>
+
+    @FormUrlEncoded
+    @POST("api/profile/cover-photo-url")
+    suspend fun uploadCoverPhotoWithUrl(
+        @Field("photoUrl") photoUrl: String
+    ): Response<PhotoUploadResponse>
+
     // Get user profile
     @GET("api/profile/{userId}")
     suspend fun getProfile(@Path("userId") userId: String): Response<ProfileResponse>

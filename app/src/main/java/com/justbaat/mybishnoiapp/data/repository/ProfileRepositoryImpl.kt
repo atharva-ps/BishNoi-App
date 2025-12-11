@@ -5,17 +5,25 @@ import com.justbaat.mybishnoiapp.data.remote.dto.*
 import com.justbaat.mybishnoiapp.domain.model.*
 import com.justbaat.mybishnoiapp.domain.repository.ProfileRepository
 import com.justbaat.mybishnoiapp.utils.Resource
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 class ProfileRepositoryImpl @Inject constructor(
     private val apiService: ApiService
 ) : ProfileRepository {
+
+    private val httpClient = OkHttpClient()
 
     override suspend fun getProfile(userId: String): Flow<Resource<Profile>> = flow {
         try {
@@ -71,21 +79,65 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
+    // ✅ UPDATED: Upload profile photo with presigned URL
     override suspend fun uploadProfilePhoto(imageFile: File): Flow<Resource<String>> = flow {
         try {
             emit(Resource.Loading())
 
-            // Create request body
-            val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-            val photoPart = MultipartBody.Part.createFormData("photo", imageFile.name, requestFile)
+            // Step 1: Get presigned URL from backend
+            val presignedResponse = apiService.getPresignedUrlProfile(imageFile.name)
 
-            val response = apiService.uploadProfilePhoto(photoPart)
+            if (!presignedResponse.isSuccessful || presignedResponse.body() == null) {
+                emit(Resource.Error("Failed to get upload URL"))
+                return@flow
+            }
+
+            val presignedData = presignedResponse.body()!!
+            val uploadUrl = presignedData.uploadUrl
+            val photoUrl = presignedData.fileUrl
+
+            // Step 2: Upload image directly to S3
+            val contentType = when (imageFile.extension.lowercase()) {
+                "png" -> "image/png"
+                "gif" -> "image/gif"
+                "webp" -> "image/webp"
+                "heic", "heif" -> "image/heic"
+                else -> "image/jpeg"
+            }
+
+            val imageRequestBody = imageFile.asRequestBody(contentType.toMediaTypeOrNull())
+            val s3Request = Request.Builder()
+                .url(uploadUrl)
+                .put(imageRequestBody)
+                .build()
+
+            val s3Response = withContext(Dispatchers.IO) {
+                suspendCoroutine { continuation ->
+                    httpClient.newCall(s3Request).enqueue(object : okhttp3.Callback {
+                        override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                            continuation.resumeWithException(e)
+                        }
+
+                        override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                            continuation.resume(response)
+                        }
+                    })
+                }
+            }
+
+            if (!s3Response.isSuccessful) {
+                emit(Resource.Error("Failed to upload photo to S3: ${s3Response.code}"))
+                return@flow
+            }
+
+            // Step 3: Update backend with photo URL
+            val response = apiService.uploadProfilePhotoWithUrl(photoUrl)
 
             if (response.isSuccessful && response.body() != null) {
-                val photoUrl = response.body()!!.photoUrl
-                emit(Resource.Success(photoUrl))
+                val finalPhotoUrl = response.body()!!.photoUrl
+                emit(Resource.Success(finalPhotoUrl))
             } else {
-                emit(Resource.Error(response.message() ?: "Failed to upload photo"))
+                emit(Resource.Error(response.body()?.message ?: "Failed to update profile photo"))
             }
 
         } catch (e: Exception) {
@@ -93,20 +145,65 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
+    // ✅ UPDATED: Upload cover photo with presigned URL
     override suspend fun uploadCoverPhoto(imageFile: File): Flow<Resource<String>> = flow {
         try {
             emit(Resource.Loading())
 
-            val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-            val photoPart = MultipartBody.Part.createFormData("photo", imageFile.name, requestFile)
+            // Step 1: Get presigned URL from backend
+            val presignedResponse = apiService.getPresignedUrlCover(imageFile.name)
 
-            val response = apiService.uploadCoverPhoto(photoPart)
+            if (!presignedResponse.isSuccessful || presignedResponse.body() == null) {
+                emit(Resource.Error("Failed to get upload URL"))
+                return@flow
+            }
+
+            val presignedData = presignedResponse.body()!!
+            val uploadUrl = presignedData.uploadUrl
+            val photoUrl = presignedData.fileUrl
+
+            // Step 2: Upload image directly to S3
+            val contentType = when (imageFile.extension.lowercase()) {
+                "png" -> "image/png"
+                "gif" -> "image/gif"
+                "webp" -> "image/webp"
+                "heic", "heif" -> "image/heic"
+                else -> "image/jpeg"
+            }
+
+            val imageRequestBody = imageFile.asRequestBody(contentType.toMediaTypeOrNull())
+            val s3Request = Request.Builder()
+                .url(uploadUrl)
+                .put(imageRequestBody)
+                .build()
+
+            val s3Response = withContext(Dispatchers.IO) {
+                suspendCoroutine { continuation ->
+                    httpClient.newCall(s3Request).enqueue(object : okhttp3.Callback {
+                        override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                            continuation.resumeWithException(e)
+                        }
+
+                        override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                            continuation.resume(response)
+                        }
+                    })
+                }
+            }
+
+            if (!s3Response.isSuccessful) {
+                emit(Resource.Error("Failed to upload photo to S3: ${s3Response.code}"))
+                return@flow
+            }
+
+            // Step 3: Update backend with photo URL
+            val response = apiService.uploadCoverPhotoWithUrl(photoUrl)
 
             if (response.isSuccessful && response.body() != null) {
-                val photoUrl = response.body()!!.photoUrl
-                emit(Resource.Success(photoUrl))
+                val finalPhotoUrl = response.body()!!.photoUrl
+                emit(Resource.Success(finalPhotoUrl))
             } else {
-                emit(Resource.Error(response.message() ?: "Failed to upload cover photo"))
+                emit(Resource.Error(response.body()?.message ?: "Failed to update cover photo"))
             }
 
         } catch (e: Exception) {
