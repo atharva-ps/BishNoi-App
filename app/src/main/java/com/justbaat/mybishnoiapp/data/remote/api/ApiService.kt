@@ -216,4 +216,14 @@ interface ApiService {
         @Body request: ReportRequest
     ): Response<ReportResponse>
 
+    // ==================== App version check ====================
+
+    @GET("api/app/version")
+    suspend fun checkVersion(
+        @Query("currentVersion") currentVersion: String
+    ): Response<VersionCheckResponse>
+
+    @GET("api/app/config")
+    suspend fun getAppConfig(): Response<AppConfigResponse>
+
 }
