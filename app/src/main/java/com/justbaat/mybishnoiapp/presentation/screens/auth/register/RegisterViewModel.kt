@@ -6,6 +6,7 @@ import com.justbaat.mybishnoiapp.domain.model.User
 import com.justbaat.mybishnoiapp.domain.usecase.auth.RegisterUseCase
 import com.justbaat.mybishnoiapp.domain.usecase.auth.ValidateEmailUseCase
 import com.justbaat.mybishnoiapp.domain.usecase.auth.ValidatePasswordUseCase
+import com.justbaat.mybishnoiapp.domain.usecase.auth.ValidateUsernameUseCase
 import com.justbaat.mybishnoiapp.domain.usecase.auth.ValidationResult
 import com.justbaat.mybishnoiapp.utils.Resource
 import com.justbaat.mybishnoiapp.utils.isValidName
@@ -20,6 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
+    private val validateUsernameUseCase: ValidateUsernameUseCase,
     private val validateEmailUseCase: ValidateEmailUseCase,
     private val validatePasswordUseCase: ValidatePasswordUseCase
 ) : ViewModel() {
@@ -79,13 +81,15 @@ class RegisterViewModel @Inject constructor(
         val state = _uiState.value
 
         // Validate all inputs
-        val nameValidation = validateName(state.name)
+        val usernameValidation = validateUsernameUseCase(state.name)
+//        val nameValidation = validateName(state.name)
         val emailValidation = validateEmailUseCase(state.email)
         val passwordValidation = validatePasswordUseCase(state.password)
         val confirmPasswordValidation = validateConfirmPassword(state.password, state.confirmPassword)
 
         val hasError = listOf(
-            nameValidation,
+//            nameValidation,
+            usernameValidation,
             emailValidation,
             passwordValidation,
             confirmPasswordValidation
@@ -94,7 +98,7 @@ class RegisterViewModel @Inject constructor(
         if (hasError) {
             _uiState.update {
                 it.copy(
-                    nameError = nameValidation.errorMessage,
+                    nameError = usernameValidation.errorMessage,
                     emailError = emailValidation.errorMessage,
                     passwordError = passwordValidation.errorMessage,
                     confirmPasswordError = confirmPasswordValidation.errorMessage

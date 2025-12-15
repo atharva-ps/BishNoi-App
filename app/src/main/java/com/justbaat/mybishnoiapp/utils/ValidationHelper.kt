@@ -6,8 +6,10 @@ object ValidationHelper {
         return when {
             username.isEmpty() -> "Username is required"
             username.length < 3 -> "Username must be at least 3 characters"
-            username.length > 30 -> "Username must be less than 30 characters"
+            username.length > 16 -> "Username must be less than 16 characters"
             !username.matches(Regex("^[a-zA-Z0-9_]+$")) -> "Username can only contain letters, numbers, and underscores"
+            !username.first().isLowerCase() || !username.first().isLetter()->
+                "start with a lowercase letter"
             else -> null
         }
     }
