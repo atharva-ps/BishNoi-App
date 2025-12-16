@@ -8,6 +8,42 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:541188914329:android:40ca59da4d04ac53f94c08",
+        "android_client_info": {
+          "package_name": "com.app.bishnoi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "541188914329-msedpo1ad7tn5kv286dnno3ng7qtofge.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeUBGG1HgSyzpFvsBLMu76b-MqiWRWB-o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "541188914329-2q2scgooru30gc5tet4hdd1hvjpgqkaj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "541188914329-3cm6dr50dd5tbrtdhradjdv7f7i5scf9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.visionplay"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:541188914329:android:29a897e1ab3fe4c9f94c08",
         "android_client_info": {
           "package_name": "com.justbaat.amora"

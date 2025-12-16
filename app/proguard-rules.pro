@@ -22,8 +22,8 @@
 -keep class * implements com.google.gson.JsonDeserializer
 
 # Your DTOs
--keep class com.justbaat.mybishnoiapp.data.remote.dto.** { *; }
--keep class com.justbaat.mybishnoiapp.domain.model.** { *; }
+-keep class com.app.bishnoi.data.remote.dto.** { *; }
+-keep class com.app.bishnoi.domain.model.** { *; }
 
 # Coil
 -keep class coil.** { *; }

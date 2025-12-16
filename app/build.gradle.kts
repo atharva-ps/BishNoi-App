@@ -8,15 +8,15 @@ plugins {
 }
 
 android {
-    namespace = "com.justbaat.mybishnoiapp"
+    namespace = "com.app.bishnoi"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.justbaat.mybishnoiapp"
+        applicationId = "com.app.bishnoi"
         minSdk = 24
         targetSdk = 36
         versionCode = 2
-        versionName = "1.2"
+        versionName = "2.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
