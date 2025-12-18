@@ -216,40 +216,7 @@ class ProfileViewModel @Inject constructor(
     }
 
 
-    fun loadUserPosts(userId: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingPosts = true) }
 
-            try {
-                val response = apiService.getUserPosts(userId)
-                if (response.isSuccessful && response.body()?.success == true) {
-                    val dtoPosts = response.body()!!.posts
-                    val domainPosts = dtoPosts.map { it.toDomain() }
-
-                    _uiState.update {
-                        it.copy(
-                            userPosts = domainPosts,
-                            isLoadingPosts = false
-                        )
-                    }
-                } else {
-                    _uiState.update {
-                        it.copy(
-                            isLoadingPosts = false,
-                            error = "Failed to load posts"
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoadingPosts = false,
-                        error = e.message ?: "Error loading posts"
-                    )
-                }
-            }
-        }
-    }
 
 
     fun clearError() {

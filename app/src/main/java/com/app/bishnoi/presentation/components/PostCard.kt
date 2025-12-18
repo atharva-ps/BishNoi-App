@@ -20,6 +20,7 @@ import coil.compose.SubcomposeAsyncImage
 import com.app.bishnoi.domain.model.Post
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Report
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.getValue
@@ -189,6 +190,29 @@ fun PostCard(
                                 }
                             )
                         }
+                        // ✅ Add Share option for all posts
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "Share",
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            },
+                            onClick = {
+                                showMenu = false
+                                onShareClick()  // ✅ New callback
+                            }
+                        )
                     }
                 }
             }

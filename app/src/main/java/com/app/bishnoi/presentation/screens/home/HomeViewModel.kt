@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.app.bishnoi.domain.model.Profile
+import com.app.bishnoi.data.remote.dto.toDomainModel
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -29,12 +31,32 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadCurrentUser()
+        loadCurrentUserProfile()
         loadFeed()
     }
 
     private fun loadCurrentUser() {
         val currentUser = authRepository.getCurrentUser()
         _uiState.update { it.copy(currentUser = currentUser) }
+    }
+
+    private fun loadCurrentUserProfile() {
+        viewModelScope.launch {
+            try {
+                val currentUser = authRepository.getCurrentUser()
+                if (currentUser != null) {
+                    val response = apiService.getProfile(currentUser.id)
+                    if (response.isSuccessful && response.body()?.success == true) {
+                        _uiState.update {
+                            it.copy(currentUserProfile = response.body()!!.user.toDomainModel())
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Silent fail - not critical for feed
+                println("❌ Load profile error: ${e.message}")
+            }
+        }
     }
 
     // ✅ Search users
@@ -248,6 +270,7 @@ class HomeViewModel @Inject constructor(
 
 data class HomeUiState(
     val currentUser: User? = null,
+    val currentUserProfile: Profile? = null,
     val isLoggingOut: Boolean = false,
     val isLoggedOut: Boolean = false,
     val isSearching: Boolean = false, // ✅ Add this

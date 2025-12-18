@@ -25,6 +25,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.app.bishnoi.presentation.components.DeleteConfirmationDialog
 import com.app.bishnoi.presentation.components.ReportBottomSheet
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.app.bishnoi.presentation.components.ShareCardGenerator
+import com.app.bishnoi.presentation.components.ShareUtils
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,11 +45,16 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    val scope = rememberCoroutineScope()
+
     // ✅ Delete dialog state
     var postToDelete by remember { mutableStateOf<Post?>(null) }
 
     // ✅ Report sheet state
     var postToReport by remember { mutableStateOf<Post?>(null) }
+
+    // ✅ Share loading state
+    var isSharing by remember { mutableStateOf(false) }
 
     // Show delete confirmation dialog
     postToDelete?.let { post ->
@@ -83,6 +92,16 @@ fun HomeScreen(
             },
             isLoading = false
         )
+    }
+
+    // ✅ Share loading indicator
+    if (isSharing) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
     }
 
     Scaffold(
@@ -172,7 +191,80 @@ fun HomeScreen(
                         onToggleLike = { post -> viewModel.toggleLike(post) },  // ✅ Add this
                         onPostClick = onNavigateToPostDetail,
                         onDeleteClick = { post -> postToDelete = post },  // ✅ Show dialog
-                        onReportClick = { post -> postToReport = post }
+                        onReportClick = { post -> postToReport = post },
+                        onShareClick = { post ->
+                            scope.launch {
+                                isSharing = true
+                                try {
+                                    val profile = uiState.currentUserProfile
+
+                                    if (profile == null) {
+                                        Toast.makeText(
+                                            context,
+                                            "Loading profile...",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        isSharing = false
+                                        return@launch
+                                    }
+
+                                    // Build full name
+                                    val fullName = buildString {
+                                        if (profile.firstName.isNotBlank()) {
+                                            append(profile.firstName)
+                                        }
+                                        if (profile.lastName.isNotBlank()) {
+                                            if (isNotEmpty()) append(" ")
+                                            append(profile.lastName)
+                                        }
+                                    }.ifEmpty { profile.username }
+
+                                    // Get designation
+                                    val designation = profile.professionalDetails.designation
+                                        .takeIf { it.isNotBlank() }
+
+                                    // Get city
+                                    val city = profile.address.current.city
+                                        .takeIf { it.isNotBlank() }
+
+                                    // Get state
+                                    val state = profile.address.current.state
+                                        .takeIf { it.isNotBlank() }
+
+                                    val imageFile = ShareCardGenerator.generateShareCard(
+                                        context = context,
+                                        postImageUrl = post.imageUrl ?: "",
+                                        userProfileUrl = profile.profilePhoto,
+                                        userName = fullName,
+                                        userDesignation = designation,
+                                        userCity = city,
+                                        userState = state
+                                    )
+
+                                    if (imageFile != null) {
+                                        ShareUtils.shareImage(
+                                            context = context,
+                                            imageFile = imageFile,
+                                            text = "Check out this post on BishNoi! ${post.caption}"
+                                        )
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Failed to create share card",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(
+                                        context,
+                                        "Error: ${e.message}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } finally {
+                                    isSharing = false
+                                }
+                            }
+                        }
                     )
                 }
             }
@@ -188,7 +280,8 @@ private fun HomeFeed(
     onPostClick: (Post) -> Unit,
     onToggleLike: (Post) -> Unit,  // ✅ Add this
     onDeleteClick: (Post) -> Unit,
-    onReportClick: (Post) -> Unit
+    onReportClick: (Post) -> Unit,
+    onShareClick: (Post) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -203,7 +296,8 @@ private fun HomeFeed(
                 onLikeClick = { onToggleLike(post) },  // ✅ Wire this
                 onCommentsClick = { onPostClick(post) },
                 onDeleteClick = { onDeleteClick(post) },  // ✅ Pass delete callback
-                onReportClick = { onReportClick(post) }
+                onReportClick = { onReportClick(post) },
+                onShareClick = { onShareClick(post) }
             )
         }
     }

@@ -10,13 +10,6 @@ data class ProfileResponse(
     val message: String? = null
 )
 
-//data class PresignedUrlResponse(
-//    val success: Boolean,
-//    val uploadUrl: String,
-//    val fileUrl: String,
-//    val key: String
-//)
-
 data class ProfileDto(
     @SerializedName("_id")
     val id: String? = null,
