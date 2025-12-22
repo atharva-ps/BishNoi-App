@@ -13,6 +13,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.google.gson.Gson
 import com.app.bishnoi.domain.model.Post
+import com.app.bishnoi.presentation.screens.auth.forgot.ForgotPasswordScreen
 import com.app.bishnoi.presentation.screens.auth.login.LoginScreen
 import com.app.bishnoi.presentation.screens.auth.register.RegisterScreen
 import com.app.bishnoi.presentation.screens.createpost.CreatePostScreen
@@ -21,6 +22,7 @@ import com.app.bishnoi.presentation.screens.follow.FollowingScreen
 import com.app.bishnoi.presentation.screens.home.HomeScreen
 import com.app.bishnoi.presentation.screens.home.HomeViewModel
 import com.app.bishnoi.presentation.screens.members.MembersScreen
+import com.app.bishnoi.presentation.screens.news.NewsScreen
 import com.app.bishnoi.presentation.screens.postdetail.PostDetailScreen
 import com.app.bishnoi.presentation.screens.profile.ProfileScreen
 import com.app.bishnoi.presentation.screens.profile.EditProfileScreen
@@ -54,6 +56,9 @@ fun NavGraph(
                                 inclusive = true
                             }
                         }
+                    },
+                    onNavigateToForgotPassword = {        // ✅ NEW
+                        navController.navigate(Screen.ForgotPassword.route)
                     }
                 )
             }
@@ -69,6 +74,15 @@ fun NavGraph(
                                 inclusive = true
                             }
                         }
+                    }
+                )
+            }
+
+            // ✅ Forgot Password screen
+            composable(route = Screen.ForgotPassword.route) {
+                ForgotPasswordScreen(
+                    onNavigateBackToLogin = {
+                        navController.popBackStack()   // back to Login
                     }
                 )
             }
@@ -104,8 +118,15 @@ fun NavGraph(
                     },
                     onNavigateToMembers = {  // ✅ Add this
                         navController.navigate(Screen.Members.route)
+                    },
+                    onNavigateToNews = {  // ✅ NEW
+                        navController.navigate(Screen.News.route)
                     }
                 )
+            }
+            // ✅ NEWS SCREEN (NEW)
+            composable(route = Screen.News.route) {
+                NewsScreen()
             }
 
             // In MainGraph, add Search screen:
@@ -119,6 +140,9 @@ fun NavGraph(
                     },
                     onNavigateToProfile = { userId ->
                         navController.navigate(Screen.Profile.createRoute(userId))
+                    },
+                    onNavigateToNews = {  // ✅ NEW (if ProfileScreen has bottom nav)
+                        navController.navigate(Screen.News.route)
                     }
                 )
             }
@@ -154,6 +178,9 @@ fun NavGraph(
                     },
                     onNavigateToMembers = {  // ✅ Add
                         navController.navigate(Screen.Members.route)
+                    },
+                    onNavigateToNews = {  // ✅ NEW (if ProfileScreen has bottom nav)
+                        navController.navigate(Screen.News.route)
                     },
                     onNavigateToCreatePost = {  // ✅ Add
                         navController.navigate(Screen.CreatePost.route)
@@ -196,6 +223,9 @@ fun NavGraph(
                         } else {
                             navController.navigate(Screen.Profile.createRoute(userId))
                         }
+                    },
+                    onNavigateToNews = {  // ✅ NEW (if MembersScreen has bottom nav)
+                        navController.navigate(Screen.News.route)
                     }
                 )
             }

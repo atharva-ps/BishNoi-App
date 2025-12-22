@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
@@ -19,6 +21,7 @@ import androidx.compose.ui.unit.dp
 fun BottomNavBar(
     selectedRoute: String,
     onHomeClick: () -> Unit,
+    onNewsClick: () -> Unit,
     onMembersClick: () -> Unit,  // ✅ Add Members
     onCreatePostClick: () -> Unit,
     onProfileClick: () -> Unit,
@@ -47,14 +50,14 @@ fun BottomNavBar(
             )
         )
 
-        // ✅ Members
+        // ✅ NEWS (NEW)
         NavigationBarItem(
-            selected = selectedRoute == "members",
-            onClick = onMembersClick,
+            selected = selectedRoute == "news",
+            onClick = onNewsClick,
             icon = {
                 Icon(
-                    imageVector = if (selectedRoute == "members") Icons.Filled.People else Icons.Outlined.People,
-                    contentDescription = "Members",
+                    imageVector = if (selectedRoute == "news") Icons.Filled.Newspaper else Icons.Outlined.Newspaper,
+                    contentDescription = "News",
                     modifier = Modifier.size(28.dp)
                 )
             },
@@ -82,6 +85,24 @@ fun BottomNavBar(
                         modifier = Modifier.size(28.dp)
                     )
                 }
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.onBackground,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                indicatorColor = Color.Transparent
+            )
+        )
+
+        // ✅ Members
+        NavigationBarItem(
+            selected = selectedRoute == "members",
+            onClick = onMembersClick,
+            icon = {
+                Icon(
+                    imageVector = if (selectedRoute == "members") Icons.Filled.People else Icons.Outlined.People,
+                    contentDescription = "Members",
+                    modifier = Modifier.size(28.dp)
+                )
             },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.onBackground,

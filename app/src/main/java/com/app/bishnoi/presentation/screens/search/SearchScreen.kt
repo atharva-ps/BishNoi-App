@@ -27,6 +27,7 @@ fun SearchScreen(
     onNavigateBack: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToMembers: () -> Unit,
+    onNavigateToNews: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -76,6 +77,7 @@ fun SearchScreen(
             BottomNavBar(
                 selectedRoute = "",
                 onHomeClick = onNavigateBack,
+                onNewsClick = onNavigateToNews,
                 onMembersClick = onNavigateToMembers,
                 onCreatePostClick = { /* TODO */ },
                 onProfileClick = {

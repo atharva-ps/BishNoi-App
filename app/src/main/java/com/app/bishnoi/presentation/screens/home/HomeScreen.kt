@@ -29,7 +29,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import com.app.bishnoi.presentation.components.ShareCardGenerator
 import com.app.bishnoi.presentation.components.ShareUtils
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import com.app.bishnoi.R
 
+
+private val BishnoiFont = FontFamily(
+    Font(R.font.poppins_regular, FontWeight.Normal),
+    Font(R.font.poppins_medium, FontWeight.Medium),
+    Font(R.font.poppins_semibold, FontWeight.SemiBold),
+    Font(R.font.poppins_bold, FontWeight.Bold)
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,10 +50,12 @@ fun HomeScreen(
     onNavigateToCreatePost: () -> Unit,
     onNavigateToPostDetail: (Post) -> Unit,
     onNavigateToMembers: () -> Unit,
+    onNavigateToNews: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
 
     val scope = rememberCoroutineScope()
 
@@ -121,8 +133,10 @@ fun HomeScreen(
                     Text(
                         text = "BishNoi",
                         style = MaterialTheme.typography.headlineSmall.copy(
+                            fontFamily = BishnoiFont,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 24.sp
+                            fontSize = 24.sp,
+                            letterSpacing = 0.2.sp,
                         ),
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -160,6 +174,7 @@ fun HomeScreen(
             BottomNavBar(
                 selectedRoute = "home",
                 onHomeClick = { /* Already on home */ },
+                onNewsClick = onNavigateToNews,
                 onMembersClick = onNavigateToMembers,
                 onCreatePostClick = onNavigateToCreatePost,
                 onProfileClick = {

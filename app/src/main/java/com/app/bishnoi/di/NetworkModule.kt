@@ -1,6 +1,7 @@
 package com.app.bishnoi.di
 
 import com.app.bishnoi.data.remote.api.ApiService
+import com.app.bishnoi.data.remote.api.WordpressApiService
 import com.app.bishnoi.utils.Constants
 import com.app.bishnoi.utils.TokenManager
 import dagger.Module
@@ -60,6 +61,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @BishnoiRetrofit
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
@@ -68,9 +70,40 @@ object NetworkModule {
             .build()
     }
 
+    // Main BishNoi ApiService
     @Provides
     @Singleton
-    fun provideApiService(retrofit: Retrofit): ApiService {
+    fun provideApiService(@BishnoiRetrofit retrofit: Retrofit): ApiService {  // ✅ Use qualifier
         return retrofit.create(ApiService::class.java)
+    }
+
+    // 3) WordPress Retrofit – NO auth header, simple client
+    @Provides
+    @Singleton
+    @WordpressRetrofit
+    fun provideWordpressRetrofit(
+        loggingInterceptor: HttpLoggingInterceptor
+    ): Retrofit {
+        val client = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(Constants.TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(Constants.TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .writeTimeout(Constants.TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl("https://news.bishnoiapp.com/")   // your WordPress base URL
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    // WordPress ApiService
+    @Provides
+    @Singleton
+    fun provideWordpressApiService(
+        @WordpressRetrofit wordpressRetrofit: Retrofit  // ✅ Use qualifier
+    ): WordpressApiService {
+        return wordpressRetrofit.create(WordpressApiService::class.java)
     }
 }

@@ -253,4 +253,36 @@ class AuthRepositoryImpl @Inject constructor(
             null
         }
     }
+
+    override suspend fun sendPasswordReset(emailOrUsername: String): Flow<Resource<Unit>> = flow {
+        try {
+            emit(Resource.Loading())
+
+            // Resolve username → email if needed
+            val resolvedEmail = if (android.util.Patterns.EMAIL_ADDRESS
+                    .matcher(emailOrUsername).matches()
+            ) {
+                emailOrUsername
+            } else {
+                val res = apiService.getEmailByUsername(GetEmailRequest(emailOrUsername))
+                if (res.isSuccessful && res.body()?.success == true && res.body()!!.email != null) {
+                    res.body()!!.email!!
+                } else {
+                    throw Exception("No account found with this email/username")
+                }
+            }
+
+            firebaseAuth.sendPasswordResetEmail(resolvedEmail).await()
+            emit(Resource.Success(Unit))
+        } catch (e: Exception) {
+            val msg = when {
+                e.message?.contains("no user record", ignoreCase = true) == true ->
+                    "No account found with this email/username"
+                e.message?.contains("badly formatted", ignoreCase = true) == true ->
+                    "Please enter a valid email"
+                else -> e.message ?: "Failed to send reset link"
+            }
+            emit(Resource.Error(msg))
+        }
+    }
 }

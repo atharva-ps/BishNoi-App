@@ -121,4 +121,7 @@ dependencies {
     implementation(libs.accompanist.pager.indicators)
 
     implementation(libs.ucrop)
+
+    // Paging (if you want pagination later)
+    implementation("androidx.paging:paging-compose:3.2.1")
 }

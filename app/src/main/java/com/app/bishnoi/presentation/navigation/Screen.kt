@@ -32,6 +32,7 @@ sealed class Screen(val route: String) {
 
     object Members : Screen("members")
 
+    object ForgotPassword : Screen("forgot_password")
 
-
+    object News : Screen("news")
 }

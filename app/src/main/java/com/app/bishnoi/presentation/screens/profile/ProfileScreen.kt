@@ -46,6 +46,7 @@ fun ProfileScreen(
     onNavigateToCreatePost: () -> Unit,
     onNavigateToFollowers: (String) -> Unit,
     onNavigateToFollowing: (String) -> Unit,
+    onNavigateToNews: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -117,6 +118,7 @@ fun ProfileScreen(
             BottomNavBar(
                 selectedRoute = "profile",
                 onHomeClick = onNavigateToHome,
+                onNewsClick = onNavigateToNews,
                 onMembersClick = onNavigateToMembers,
                 onCreatePostClick = onNavigateToCreatePost,
                 onProfileClick = { /* Already on profile */ }
