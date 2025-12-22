@@ -238,6 +238,7 @@ fun HomeScreen(
                                         userName = fullName,
                                         userDesignation = designation,
                                         userCity = city,
+                                        postFormat = post.format,
                                         userState = state
                                     )
 

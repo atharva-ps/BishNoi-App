@@ -226,7 +226,9 @@ fun PostCard(
                     contentDescription = "Post image",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 220.dp)
+                        .aspectRatio(
+                            if (post.format == "VERTICAL") 4f / 5f else 1.91f / 1f
+                        )
                         .clip(RoundedCornerShape(16.dp)),
                     contentScale = ContentScale.Crop,
                     loading = {
@@ -287,13 +289,6 @@ fun PostCard(
                     }
                 }
 
-//                // Share
-//                Text(
-//                    text = "Share",
-//                    style = MaterialTheme.typography.bodyMedium,
-//                    color = MaterialTheme.colorScheme.primary,
-//                    modifier = Modifier.clickable { onShareClick() }
-//                )
             }
 
 

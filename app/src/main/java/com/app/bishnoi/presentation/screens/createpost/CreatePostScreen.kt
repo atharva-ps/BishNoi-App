@@ -1,5 +1,9 @@
 package com.app.bishnoi.presentation.screens.createpost
 
+import android.app.Activity
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +27,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.app.bishnoi.utils.FileUtils
 import com.app.bishnoi.utils.rememberImagePickerLauncher
+import java.io.File
+import com.yalantis.ucrop.UCrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,12 +38,39 @@ fun CreatePostScreen(
     viewModel: CreatePostViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
     val context = LocalContext.current
 
-    val imagePickerLauncher = rememberImagePickerLauncher { uri ->
-        val file = FileUtils.compressImage(context, uri, maxSizeKB = 1200)
-        viewModel.setImageFile(file)
+    // 1️⃣ Crop result launcher (MUST come first)
+    val cropLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val croppedUri = UCrop.getOutput(result.data!!) ?: return@rememberLauncherForActivityResult
+            val file = FileUtils.compressImage(context, croppedUri, 1200)
+            viewModel.setImageFile(file)
+        }
     }
+
+    // 2️⃣ Image picker launcher
+    val imagePickerLauncher = rememberImagePickerLauncher { sourceUri ->
+
+        val destinationUri = Uri.fromFile(
+            File(context.cacheDir, "crop_${System.currentTimeMillis()}.jpg")
+        )
+
+        val isVertical = uiState.format == PostFormat.VERTICAL
+
+        val uCrop = UCrop.of(sourceUri, destinationUri)
+            .withAspectRatio(if (isVertical) 4f else 191f, if (isVertical) 5f else 100f)
+            .withMaxResultSize(if (isVertical) 1080 else 1080, if (isVertical) 1350 else 566)
+
+        cropLauncher.launch(uCrop.getIntent(context))
+    }
+
+
+
+
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -98,7 +131,9 @@ fun CreatePostScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp)
+                    .aspectRatio(
+                        if (uiState.format == PostFormat.VERTICAL) 4f / 5f else 1.91f / 1f
+                    )
                     .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
@@ -177,6 +212,19 @@ fun CreatePostScreen(
                     label = { Text("Public") }
                 )
             }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                FilterChip(
+                    selected = uiState.format == PostFormat.VERTICAL,
+                    onClick = { viewModel.setFormat(PostFormat.VERTICAL) },
+                    label = { Text("Vertical") }
+                )
+                FilterChip(
+                    selected = uiState.format == PostFormat.HORIZONTAL,
+                    onClick = { viewModel.setFormat(PostFormat.HORIZONTAL) },
+                    label = { Text("Horizontal") }
+                )
+            }
+
         }
     }
 }

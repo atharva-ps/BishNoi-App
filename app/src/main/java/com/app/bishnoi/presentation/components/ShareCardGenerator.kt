@@ -23,6 +23,7 @@ object ShareCardGenerator {
     suspend fun generateShareCard(
         context: Context,
         postImageUrl: String,
+        postFormat: String,
         userProfileUrl: String?,
         userName: String,
         userDesignation: String?,
@@ -31,8 +32,16 @@ object ShareCardGenerator {
     ): File? = withContext(Dispatchers.IO) {
         try {
             // Card dimensions (Instagram post size)
-            val cardWidth = 1080
-            val cardHeight = 1080
+            val cardWidth: Int
+            val cardHeight: Int
+
+            if (postFormat == "VERTICAL") {
+                cardWidth = 1080
+                cardHeight = 1350   // 4:5
+            } else {
+                cardWidth = 1080
+                cardHeight = 566    // 1.91:1
+            }
 
             // Create bitmap
             val bitmap = Bitmap.createBitmap(cardWidth, cardHeight, Bitmap.Config.ARGB_8888)
@@ -111,13 +120,34 @@ object ShareCardGenerator {
         }
     }
 
-    private fun drawPostImage(canvas: Canvas, postBitmap: Bitmap, width: Int, height: Int) {
-        // Scale and center crop the post image
-        val srcRect = Rect(0, 0, postBitmap.width, postBitmap.height)
-        val destRect = Rect(0, 0, width, height)
+    private fun drawPostImage(
+        canvas: Canvas,
+        postBitmap: Bitmap,
+        destWidth: Int,
+        destHeight: Int
+    ) {
+        val srcWidth = postBitmap.width
+        val srcHeight = postBitmap.height
 
+        val srcAspect = srcWidth.toFloat() / srcHeight
+        val destAspect = destWidth.toFloat() / destHeight
+
+        val srcRect: Rect = if (srcAspect > destAspect) {
+            // Crop horizontally
+            val newWidth = (srcHeight * destAspect).toInt()
+            val xOffset = (srcWidth - newWidth) / 2
+            Rect(xOffset, 0, xOffset + newWidth, srcHeight)
+        } else {
+            // Crop vertically
+            val newHeight = (srcWidth / destAspect).toInt()
+            val yOffset = (srcHeight - newHeight) / 2
+            Rect(0, yOffset, srcWidth, yOffset + newHeight)
+        }
+
+        val destRect = Rect(0, 0, destWidth, destHeight)
         canvas.drawBitmap(postBitmap, srcRect, destRect, null)
     }
+
 
     private fun drawInfoCard(
         canvas: Canvas,
@@ -129,13 +159,35 @@ object ShareCardGenerator {
         cardWidth: Int,
         cardHeight: Int
     ) {
-        val cardPadding = 32f
-        val cardBottomMargin = 24f
-        val cardCornerRadius = 32f
+        val cardPadding = 40f
+        val cardBottomMargin = 40f
+        val cardCornerRadius = 24f
 
-        // Card dimensions
-        val infoCardHeight = 200f
+        // Responsive card height based on content
+        val hasDesignation = !userDesignation.isNullOrBlank()
+        val hasLocation = !userCity.isNullOrBlank() || !userState.isNullOrBlank()
+        val infoCardHeight = when {
+            cardHeight > 1000 -> if (hasDesignation && hasLocation) 180f else 160f
+            else -> if (hasDesignation && hasLocation) 150f else 130f
+        }
+
         val infoCardTop = cardHeight - infoCardHeight - cardBottomMargin
+
+        // Draw shadow for depth
+        val shadowPaint = Paint().apply {
+            color = 0x40000000 // 25% black
+            style = Paint.Style.FILL
+            isAntiAlias = true
+            maskFilter = android.graphics.BlurMaskFilter(16f, android.graphics.BlurMaskFilter.Blur.NORMAL)
+        }
+
+        val shadowRect = RectF(
+            cardPadding + 4f,
+            infoCardTop + 4f,
+            cardWidth - cardPadding + 4f,
+            cardHeight - cardBottomMargin + 4f
+        )
+        canvas.drawRoundRect(shadowRect, cardCornerRadius, cardCornerRadius, shadowPaint)
 
         // Draw white card background with rounded corners
         val cardPaint = Paint().apply {
@@ -152,104 +204,208 @@ object ShareCardGenerator {
         )
         canvas.drawRoundRect(cardRect, cardCornerRadius, cardCornerRadius, cardPaint)
 
-        // Draw profile photo
-        val profileSize = 120f
-        val profileLeft = cardPadding + 40f
+        // Profile photo configuration
+        val profileSize = if (cardHeight > 1000) 110f else 90f
+        val profileLeft = cardPadding + 30f
         val profileTop = infoCardTop + (infoCardHeight - profileSize) / 2
 
         if (profileBitmap != null) {
-            // Draw circular profile photo
+            // Draw circular profile photo with proper center-crop
             val profilePaint = Paint().apply {
+                isAntiAlias = true
+                isFilterBitmap = true
+                isDither = true
+            }
+
+            // Add subtle border/ring around profile
+            val borderPaint = Paint().apply {
+                color = 0xFFE0E0E0.toInt()
+                style = Paint.Style.STROKE
+                strokeWidth = 3f
                 isAntiAlias = true
             }
 
-            val circleRect = RectF(
-                profileLeft,
-                profileTop,
-                profileLeft + profileSize,
-                profileTop + profileSize
-            )
-
             canvas.save()
-            canvas.clipRect(circleRect)
 
             // Create circular clip path
+            val centerX = profileLeft + profileSize / 2
+            val centerY = profileTop + profileSize / 2
+            val radius = profileSize / 2
+
             val path = android.graphics.Path()
-            path.addCircle(
-                profileLeft + profileSize / 2,
-                profileTop + profileSize / 2,
-                profileSize / 2,
-                android.graphics.Path.Direction.CW
-            )
+            path.addCircle(centerX, centerY, radius, android.graphics.Path.Direction.CW)
             canvas.clipPath(path)
 
-            val profileSrcRect = Rect(0, 0, profileBitmap.width, profileBitmap.height)
+            // Calculate center-crop dimensions for profile image
+            val srcBitmap = profileBitmap
+            val srcWidth = srcBitmap.width.toFloat()
+            val srcHeight = srcBitmap.height.toFloat()
+            val srcAspect = srcWidth / srcHeight
+
+            val srcRect: Rect = if (srcAspect > 1f) {
+                // Landscape: crop sides
+                val newWidth = (srcHeight).toInt()
+                val xOffset = ((srcWidth - newWidth) / 2).toInt()
+                Rect(xOffset, 0, xOffset + newWidth, srcHeight.toInt())
+            } else {
+                // Portrait: crop top/bottom
+                val newHeight = (srcWidth).toInt()
+                val yOffset = ((srcHeight - newHeight) / 2).toInt()
+                Rect(0, yOffset, srcWidth.toInt(), yOffset + newHeight)
+            }
+
             val profileDestRect = RectF(
                 profileLeft,
                 profileTop,
                 profileLeft + profileSize,
                 profileTop + profileSize
             )
-            canvas.drawBitmap(profileBitmap, profileSrcRect, profileDestRect, profilePaint)
+
+            canvas.drawBitmap(srcBitmap, srcRect, profileDestRect, profilePaint)
             canvas.restore()
+
+            // Draw border ring
+            canvas.drawCircle(centerX, centerY, radius, borderPaint)
+
         } else {
-            // Draw placeholder circle
+            // Draw placeholder circle with icon
             val placeholderPaint = Paint().apply {
-                color = 0xFFE0E0E0.toInt()
+                color = 0xFFF5F5F5.toInt()
                 style = Paint.Style.FILL
                 isAntiAlias = true
             }
-            canvas.drawCircle(
-                profileLeft + profileSize / 2,
-                profileTop + profileSize / 2,
-                profileSize / 2,
-                placeholderPaint
-            )
+
+            val borderPaint = Paint().apply {
+                color = 0xFFE0E0E0.toInt()
+                style = Paint.Style.STROKE
+                strokeWidth = 3f
+                isAntiAlias = true
+            }
+
+            val centerX = profileLeft + profileSize / 2
+            val centerY = profileTop + profileSize / 2
+            val radius = profileSize / 2
+
+            canvas.drawCircle(centerX, centerY, radius, placeholderPaint)
+            canvas.drawCircle(centerX, centerY, radius, borderPaint)
+
+            // Draw user icon placeholder
+            val iconPaint = Paint().apply {
+                color = 0xFFBDBDBD.toInt()
+                style = Paint.Style.FILL
+                isAntiAlias = true
+            }
+            // Simple user icon - head
+            canvas.drawCircle(centerX, centerY - radius * 0.15f, radius * 0.3f, iconPaint)
+            // Simple user icon - body
+            val bodyPath = android.graphics.Path().apply {
+                addCircle(centerX, centerY + radius * 0.5f, radius * 0.45f, android.graphics.Path.Direction.CW)
+            }
+            canvas.drawPath(bodyPath, iconPaint)
         }
 
-        // Draw text info
-        val textLeft = profileLeft + profileSize + 32f
-        val textTop = infoCardTop + 50f
+        // Text configuration
+        val textLeft = profileLeft + profileSize + 24f
+        val availableTextWidth = cardWidth - textLeft - cardPadding - 200f // Reserve space for logo
 
-        // User name
+        // Calculate vertical centering for text
+        val lineHeight = 42f
+        val totalLines = 1 + (if (hasDesignation) 1 else 0) + (if (hasLocation) 1 else 0)
+        val totalTextHeight = totalLines * lineHeight
+        val textStartY = infoCardTop + (infoCardHeight - totalTextHeight) / 2 + 36f
+
+        // User name - Bold and prominent
         val namePaint = Paint().apply {
-            color = android.graphics.Color.BLACK
-            textSize = 44f
+            color = 0xFF212121.toInt()
+            textSize = if (cardHeight > 1000) 42f else 36f
             typeface = android.graphics.Typeface.create(
                 android.graphics.Typeface.DEFAULT,
                 android.graphics.Typeface.BOLD
             )
             isAntiAlias = true
         }
-        canvas.drawText(userName, textLeft, textTop, namePaint)
 
-        // User designation
-        if (!userDesignation.isNullOrBlank()) {
+        // Truncate name if too long
+        val truncatedName = truncateText(userName, namePaint, availableTextWidth)
+        canvas.drawText(truncatedName, textLeft, textStartY, namePaint)
+
+        var currentY = textStartY
+
+        // User designation - Medium weight
+        if (hasDesignation) {
+            currentY += lineHeight
             val designationPaint = Paint().apply {
                 color = 0xFF616161.toInt()
-                textSize = 32f
+                textSize = if (cardHeight > 1000) 32f else 28f
+                typeface = android.graphics.Typeface.create(
+                    android.graphics.Typeface.DEFAULT,
+                    android.graphics.Typeface.NORMAL
+                )
                 isAntiAlias = true
             }
-            canvas.drawText(userDesignation, textLeft, textTop + 50f, designationPaint)
+            val truncatedDesignation = truncateText(userDesignation!!, designationPaint, availableTextWidth)
+            canvas.drawText(truncatedDesignation, textLeft, currentY, designationPaint)
         }
 
-        // User location
-        val location = buildString {
-            if (!userCity.isNullOrBlank()) append(userCity)
-            if (!userState.isNullOrBlank()) {
-                if (isNotEmpty()) append(", ")
-                append(userState)
+        // User location - Light weight with icon-like indicator
+        if (hasLocation) {
+            currentY += lineHeight
+            val location = buildString {
+                if (!userCity.isNullOrBlank()) append(userCity)
+                if (!userState.isNullOrBlank()) {
+                    if (isNotEmpty()) append(", ")
+                    append(userState)
+                }
             }
-        }
 
-        if (location.isNotBlank()) {
             val locationPaint = Paint().apply {
                 color = 0xFF757575.toInt()
-                textSize = 28f
+                textSize = if (cardHeight > 1000) 28f else 24f
                 isAntiAlias = true
             }
-            canvas.drawText(location, textLeft, textTop + 95f, locationPaint)
+
+            // Draw location pin icon (simple marker shape)
+            val pinSize = 16f
+            val pinX = textLeft
+            val pinY = currentY - pinSize
+
+            val pinPaint = Paint().apply {
+                color = 0xFF757575.toInt()
+                style = Paint.Style.FILL
+                isAntiAlias = true
+            }
+
+            val pinPath = android.graphics.Path().apply {
+                // Create location pin shape
+                moveTo(pinX + pinSize/2, pinY)
+                lineTo(pinX + pinSize, pinY + pinSize * 0.7f)
+                lineTo(pinX + pinSize/2, pinY + pinSize)
+                lineTo(pinX, pinY + pinSize * 0.7f)
+                close()
+                addCircle(pinX + pinSize/2, pinY + pinSize * 0.35f, pinSize * 0.25f, android.graphics.Path.Direction.CW)
+            }
+            canvas.drawPath(pinPath, pinPaint)
+
+            val truncatedLocation = truncateText(location, locationPaint, availableTextWidth - pinSize - 8f)
+            canvas.drawText(truncatedLocation, textLeft + pinSize + 8f, currentY, locationPaint)
         }
+    }
+
+    // Helper function to truncate text with ellipsis
+    private fun truncateText(text: String, paint: Paint, maxWidth: Float): String {
+        val ellipsis = "..."
+        val ellipsisWidth = paint.measureText(ellipsis)
+
+        if (paint.measureText(text) <= maxWidth) {
+            return text
+        }
+
+        var truncated = text
+        while (paint.measureText(truncated + ellipsis) > maxWidth && truncated.isNotEmpty()) {
+            truncated = truncated.dropLast(1)
+        }
+
+        return truncated + ellipsis
     }
 
     private fun drawAppLogo(

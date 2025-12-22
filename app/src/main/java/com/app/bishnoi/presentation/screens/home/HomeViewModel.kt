@@ -203,7 +203,6 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
-    // In HomeViewModel.kt
 
     fun updatePost(updatedPost: Post) {
         _uiState.update { state ->

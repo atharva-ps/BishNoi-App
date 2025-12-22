@@ -12,5 +12,6 @@ data class Post(
     val createdAt: String?,         // formatted time string later
     val isLikedByCurrentUser: Boolean = false,
     val isAdmin: Boolean = false,
-    val postedBy: String = "User"  // ✅ Default value
+    val postedBy: String = "User",  // ✅ Default value
+    val format: String = "VERTICAL"
 )

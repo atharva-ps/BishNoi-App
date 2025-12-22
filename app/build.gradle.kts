@@ -119,4 +119,6 @@ dependencies {
     // Tabs/Pager
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.pager.indicators)
+
+    implementation(libs.ucrop)
 }

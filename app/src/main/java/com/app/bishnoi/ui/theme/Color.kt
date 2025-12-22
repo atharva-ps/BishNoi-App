@@ -3,7 +3,7 @@ package com.app.bishnoi.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Primary Yellow/Lime Green (from reference image)
-val YellowPrimary = Color(0xFF6D7745) // Bright lime yellow
+val YellowPrimary = Color(0xFF0692EF) // Bright lime yellow
 val YellowContainer = Color(0xFFF5FF99)
 val OnYellow = Color(0xFF1A1A1A)
 

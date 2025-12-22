@@ -136,7 +136,8 @@ interface ApiService {
     suspend fun createPostWithUrl(
         @Field("imageUrl") imageUrl: String,
         @Field("caption") caption: String,
-        @Field("visibility") visibility: String
+        @Field("visibility") visibility: String,
+        @Field("format") format: String
     ): Response<CreatePostResponse>
 
     @Multipart

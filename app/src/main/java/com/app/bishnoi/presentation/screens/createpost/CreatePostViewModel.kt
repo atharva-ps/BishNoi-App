@@ -21,6 +21,7 @@ import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import com.app.bishnoi.presentation.screens.createpost.PostFormat
 
 @HiltViewModel
 class CreatePostViewModel @Inject constructor(
@@ -35,6 +36,11 @@ class CreatePostViewModel @Inject constructor(
     fun setImageFile(file: File?) {
         _uiState.update { it.copy(selectedImage = file) }
     }
+
+    fun setFormat(format: PostFormat) {
+        _uiState.update { it.copy(format = format) }
+    }
+
 
     fun setCaption(text: String) {
         _uiState.update { it.copy(caption = text) }
@@ -128,7 +134,8 @@ class CreatePostViewModel @Inject constructor(
                 val response = apiService.createPostWithUrl(
                     imageUrl = imageUrl,
                     caption = state.caption.trim(),
-                    visibility = state.visibility.value
+                    visibility = state.visibility.value,
+                    format = state.format.name
                 )
 
                 if (response.isSuccessful && response.body()?.success == true) {
@@ -174,10 +181,16 @@ enum class PostVisibility(val value: String) {
     FOLLOWERS("followers")
 }
 
+enum class PostFormat {
+    VERTICAL,
+    HORIZONTAL
+}
+
 data class CreatePostUiState(
     val selectedImage: File? = null,
     val caption: String = "",
     val visibility: PostVisibility = PostVisibility.FOLLOWERS,
+    val format: PostFormat = PostFormat.VERTICAL,
     val isUploading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null
