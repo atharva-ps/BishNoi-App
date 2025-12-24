@@ -20,6 +20,7 @@ data class Profile(
     val followingCount: Int,
     val postsCount: Int,
     val isActive: Boolean, // ✅ Added
+    val isAdmin: Boolean = false,
     val createdAt: String?,
 
     // ✅ Privacy fields

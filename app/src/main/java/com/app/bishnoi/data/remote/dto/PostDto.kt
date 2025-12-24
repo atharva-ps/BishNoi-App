@@ -47,7 +47,8 @@ data class PostDto(
     val isLikedByCurrentUser: Boolean = false,
     val isAdmin: Boolean = false,
     val postedBy: String? = null,
-    val format: String?
+    val format: String?,
+    val isSocial: Boolean = false
 )
 
 fun PostDto.toDomain(): Post = Post(
@@ -63,7 +64,8 @@ fun PostDto.toDomain(): Post = Post(
     isLikedByCurrentUser = isLikedByCurrentUser,
     isAdmin = isAdmin,
     postedBy = postedBy ?: "User",
-    format = format ?: "VERTICAL"
+    format = format ?: "VERTICAL",
+    isSocial = isSocial
 )
 
 fun PostDto.toProfilePost() = ProfilePost(

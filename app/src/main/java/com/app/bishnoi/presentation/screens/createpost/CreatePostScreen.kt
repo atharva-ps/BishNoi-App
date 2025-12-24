@@ -46,7 +46,8 @@ fun CreatePostScreen(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val croppedUri = UCrop.getOutput(result.data!!) ?: return@rememberLauncherForActivityResult
+            val croppedUri =
+                UCrop.getOutput(result.data!!) ?: return@rememberLauncherForActivityResult
             val file = FileUtils.compressImage(context, croppedUri, 1200)
             viewModel.setImageFile(file)
         }
@@ -67,9 +68,6 @@ fun CreatePostScreen(
 
         cropLauncher.launch(uCrop.getIntent(context))
     }
-
-
-
 
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -224,7 +222,37 @@ fun CreatePostScreen(
                     label = { Text("Horizontal") }
                 )
             }
+            // Inside CreatePostScreen Column, after format chips, add:
 
+            if (uiState.isAdmin) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.setIsSocial(!uiState.isSocial) }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = uiState.isSocial,
+                        onCheckedChange = { viewModel.setIsSocial(it) }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Post to Social Feed",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "This post will appear in the Social tab instead of Home",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }

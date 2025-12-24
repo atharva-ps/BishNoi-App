@@ -56,11 +56,23 @@ class AuthRepositoryImpl @Inject constructor(
                     if (responseBody.success && responseBody.user != null) {
                         val user = responseBody.user.toDomainModel()
 
+                        // ✅ Step 3: Fetch profile to get admin status (usually false for new users)
+                        var isAdmin = false
+                        try {
+                            val profileResponse = apiService.getProfile(user.id)
+                            if (profileResponse.isSuccessful && profileResponse.body()?.success == true) {
+                                isAdmin = profileResponse.body()!!.user.isAdmin ?: false
+                            }
+                        } catch (e: Exception) {
+                            println("⚠️ Failed to fetch admin status: ${e.message}")
+                        }
+
                         // Step 3: Save user data locally
                         tokenManager.saveUserData(
                             userId = user.id,
                             email = user.email,
-                            name = user.name
+                            name = user.name,
+                            isAdmin = isAdmin
                         )
 
                         emit(Resource.Success(user))
@@ -169,11 +181,24 @@ class AuthRepositoryImpl @Inject constructor(
                 if (responseBody.success && responseBody.user != null) {
                     val user = responseBody.user.toDomainModel()
 
+                    // ✅ Step 3: Fetch full profile to get admin status
+                    var isAdmin = false
+                    try {
+                        val profileResponse = apiService.getProfile(user.id)
+                        if (profileResponse.isSuccessful && profileResponse.body()?.success == true) {
+                            isAdmin = profileResponse.body()!!.user.isAdmin ?: false
+                        }
+                    } catch (e: Exception) {
+                        // If profile fetch fails, default to false
+                        println("⚠️ Failed to fetch admin status: ${e.message}")
+                    }
+
                     // Step 3: Save user data locally
                     tokenManager.saveUserData(
                         userId = user.id,
                         email = user.email,
-                        name = user.name
+                        name = user.name,
+                        isAdmin = isAdmin
                     )
 
                     emit(Resource.Success(user))

@@ -28,6 +28,7 @@ import com.app.bishnoi.presentation.screens.profile.ProfileScreen
 import com.app.bishnoi.presentation.screens.profile.EditProfileScreen
 import com.app.bishnoi.presentation.screens.search.SearchScreen
 import com.app.bishnoi.presentation.screens.settings.SettingsScreen
+import com.app.bishnoi.presentation.screens.social.SocialScreen
 import com.app.bishnoi.utils.TokenManager
 
 @Composable
@@ -121,6 +122,9 @@ fun NavGraph(
                     },
                     onNavigateToNews = {  // ✅ NEW
                         navController.navigate(Screen.News.route)
+                    },
+                    onNavigateToSocial = {  // ✅ NEW
+                        navController.navigate(Screen.Social.route)
                     }
                 )
             }
@@ -289,6 +293,24 @@ fun NavGraph(
                     }
                 )
             }
+
+            // In MainGraph section:
+            composable(route = Screen.Social.route) {
+                SocialScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()  // ✅ Simple back navigation
+                    },
+                    onNavigateToProfile = { userId ->
+                        navController.navigate(Screen.Profile.createRoute(userId))
+                    },
+                    onNavigateToPostDetail = { post ->
+                        val postJson = Gson().toJson(post)
+                        val encodedJson = java.net.URLEncoder.encode(postJson, "UTF-8")
+                        navController.navigate("${Screen.PostDetail.route}/$encodedJson")
+                    }
+                )
+            }
+
             composable(
                 route = "${Screen.PostDetail.route}/{postJson}",
                 arguments = listOf(

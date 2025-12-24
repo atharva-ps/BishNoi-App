@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SupervisorAccount
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,6 +53,7 @@ fun HomeScreen(
     onNavigateToPostDetail: (Post) -> Unit,
     onNavigateToMembers: () -> Unit,
     onNavigateToNews: () -> Unit,
+    onNavigateToSocial: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -144,6 +147,15 @@ fun HomeScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        // ✅ Social Icon (NEW)
+                        IconButton(onClick = onNavigateToSocial) {
+                            Icon(
+                                imageVector = Icons.Default.Groups,  // or Icons.Default.Public or Icons.Default.Groups
+                                contentDescription = "Social",
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+
                         IconButton(
                             onClick = {
                                 Toast.makeText(
@@ -206,81 +218,81 @@ fun HomeScreen(
                         onToggleLike = { post -> viewModel.toggleLike(post) },  // ✅ Add this
                         onPostClick = onNavigateToPostDetail,
                         onDeleteClick = { post -> postToDelete = post },  // ✅ Show dialog
-                        onReportClick = { post -> postToReport = post },
-                        onShareClick = { post ->
-                            scope.launch {
-                                isSharing = true
-                                try {
-                                    val profile = uiState.currentUserProfile
-
-                                    if (profile == null) {
-                                        Toast.makeText(
-                                            context,
-                                            "Loading profile...",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        isSharing = false
-                                        return@launch
-                                    }
-
-                                    // Build full name
-                                    val fullName = buildString {
-                                        if (profile.firstName.isNotBlank()) {
-                                            append(profile.firstName)
-                                        }
-                                        if (profile.lastName.isNotBlank()) {
-                                            if (isNotEmpty()) append(" ")
-                                            append(profile.lastName)
-                                        }
-                                    }.ifEmpty { profile.username }
-
-                                    // Get designation
-                                    val designation = profile.professionalDetails.designation
-                                        .takeIf { it.isNotBlank() }
-
-                                    // Get city
-                                    val city = profile.address.current.city
-                                        .takeIf { it.isNotBlank() }
-
-                                    // Get state
-                                    val state = profile.address.current.state
-                                        .takeIf { it.isNotBlank() }
-
-                                    val imageFile = ShareCardGenerator.generateShareCard(
-                                        context = context,
-                                        postImageUrl = post.imageUrl ?: "",
-                                        userProfileUrl = profile.profilePhoto,
-                                        userName = fullName,
-                                        userDesignation = designation,
-                                        userCity = city,
-                                        postFormat = post.format,
-                                        userState = state
-                                    )
-
-                                    if (imageFile != null) {
-                                        ShareUtils.shareImage(
-                                            context = context,
-                                            imageFile = imageFile,
-                                            text = "Check out this post on BishNoi! ${post.caption}"
-                                        )
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "Failed to create share card",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                } catch (e: Exception) {
-                                    Toast.makeText(
-                                        context,
-                                        "Error: ${e.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } finally {
-                                    isSharing = false
-                                }
-                            }
-                        }
+                        onReportClick = { post -> postToReport = post }
+//                        onShareClick = { post ->
+//                            scope.launch {
+//                                isSharing = true
+//                                try {
+//                                    val profile = uiState.currentUserProfile
+//
+//                                    if (profile == null) {
+//                                        Toast.makeText(
+//                                            context,
+//                                            "Loading profile...",
+//                                            Toast.LENGTH_SHORT
+//                                        ).show()
+//                                        isSharing = false
+//                                        return@launch
+//                                    }
+//
+//                                    // Build full name
+//                                    val fullName = buildString {
+//                                        if (profile.firstName.isNotBlank()) {
+//                                            append(profile.firstName)
+//                                        }
+//                                        if (profile.lastName.isNotBlank()) {
+//                                            if (isNotEmpty()) append(" ")
+//                                            append(profile.lastName)
+//                                        }
+//                                    }.ifEmpty { profile.username }
+//
+//                                    // Get designation
+//                                    val designation = profile.professionalDetails.designation
+//                                        .takeIf { it.isNotBlank() }
+//
+//                                    // Get city
+//                                    val city = profile.address.current.city
+//                                        .takeIf { it.isNotBlank() }
+//
+//                                    // Get state
+//                                    val state = profile.address.current.state
+//                                        .takeIf { it.isNotBlank() }
+//
+//                                    val imageFile = ShareCardGenerator.generateShareCard(
+//                                        context = context,
+//                                        postImageUrl = post.imageUrl ?: "",
+//                                        userProfileUrl = profile.profilePhoto,
+//                                        userName = fullName,
+//                                        userDesignation = designation,
+//                                        userCity = city,
+//                                        postFormat = post.format,
+//                                        userState = state
+//                                    )
+//
+//                                    if (imageFile != null) {
+//                                        ShareUtils.shareImage(
+//                                            context = context,
+//                                            imageFile = imageFile,
+//                                            text = "Check out this post on BishNoi! ${post.caption}"
+//                                        )
+//                                    } else {
+//                                        Toast.makeText(
+//                                            context,
+//                                            "Failed to create share card",
+//                                            Toast.LENGTH_SHORT
+//                                        ).show()
+//                                    }
+//                                } catch (e: Exception) {
+//                                    Toast.makeText(
+//                                        context,
+//                                        "Error: ${e.message}",
+//                                        Toast.LENGTH_SHORT
+//                                    ).show()
+//                                } finally {
+//                                    isSharing = false
+//                                }
+//                            }
+//                        }
                     )
                 }
             }
@@ -297,7 +309,7 @@ private fun HomeFeed(
     onToggleLike: (Post) -> Unit,  // ✅ Add this
     onDeleteClick: (Post) -> Unit,
     onReportClick: (Post) -> Unit,
-    onShareClick: (Post) -> Unit
+//    onShareClick: (Post) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -313,7 +325,7 @@ private fun HomeFeed(
                 onCommentsClick = { onPostClick(post) },
                 onDeleteClick = { onDeleteClick(post) },  // ✅ Pass delete callback
                 onReportClick = { onReportClick(post) },
-                onShareClick = { onShareClick(post) }
+//                onShareClick = { onShareClick(post) }
             )
         }
     }

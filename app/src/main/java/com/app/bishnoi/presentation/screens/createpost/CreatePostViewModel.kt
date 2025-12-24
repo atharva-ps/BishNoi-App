@@ -22,16 +22,26 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import com.app.bishnoi.presentation.screens.createpost.PostFormat
+import com.app.bishnoi.utils.TokenManager
 
 @HiltViewModel
 class CreatePostViewModel @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreatePostUiState())
     val uiState: StateFlow<CreatePostUiState> = _uiState.asStateFlow()
 
     private val httpClient = OkHttpClient()
+
+    // ✅ ADD THIS INIT BLOCK
+    init {
+        viewModelScope.launch {
+            val isAdmin = tokenManager.isAdmin()
+            _uiState.update { it.copy(isAdmin = isAdmin) }
+        }
+    }
 
     fun setImageFile(file: File?) {
         _uiState.update { it.copy(selectedImage = file) }
@@ -48,6 +58,11 @@ class CreatePostViewModel @Inject constructor(
 
     fun setVisibility(visibility: PostVisibility) {
         _uiState.update { it.copy(visibility = visibility) }
+    }
+
+    // ✅ ADD THIS METHOD
+    fun setIsSocial(isSocial: Boolean) {
+        _uiState.update { it.copy(isSocial = isSocial) }
     }
 
     fun createPost(onSuccess: () -> Unit) {
@@ -135,7 +150,8 @@ class CreatePostViewModel @Inject constructor(
                     imageUrl = imageUrl,
                     caption = state.caption.trim(),
                     visibility = state.visibility.value,
-                    format = state.format.name
+                    format = state.format.name,
+                    isSocial = state.isSocial
                 )
 
                 if (response.isSuccessful && response.body()?.success == true) {
@@ -146,6 +162,7 @@ class CreatePostViewModel @Inject constructor(
                             selectedImage = null,
                             caption = "",
                             visibility = PostVisibility.FOLLOWERS,
+                            isSocial = false,
                             successMessage = "Post created successfully"
                         )
                     }
@@ -191,6 +208,8 @@ data class CreatePostUiState(
     val caption: String = "",
     val visibility: PostVisibility = PostVisibility.FOLLOWERS,
     val format: PostFormat = PostFormat.VERTICAL,
+    val isSocial: Boolean = false,  // ✅ ADD THIS LINE
+    val isAdmin: Boolean = false,
     val isUploading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null

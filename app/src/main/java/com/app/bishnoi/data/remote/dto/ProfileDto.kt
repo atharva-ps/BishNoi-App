@@ -27,6 +27,7 @@ data class ProfileDto(
     val followingCount: Int,
     val postsCount: Int,
     val isActive: Boolean,
+    val isAdmin: Boolean? = false,
     val createdAt: String?,
     val updatedAt: String?,
 

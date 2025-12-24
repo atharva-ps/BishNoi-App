@@ -13,5 +13,6 @@ data class Post(
     val isLikedByCurrentUser: Boolean = false,
     val isAdmin: Boolean = false,
     val postedBy: String = "User",  // ✅ Default value
-    val format: String = "VERTICAL"
+    val format: String = "VERTICAL",
+    val isSocial: Boolean = false
 )

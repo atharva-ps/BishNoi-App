@@ -123,9 +123,6 @@ interface ApiService {
     suspend fun getFollowStatus(@Path("userId") userId: String): Response<FollowStatusResponse>
 
     // ==================== Posts ====================
-
-    // Multipart create post: image + caption + visibility
-
     @GET("api/posts/presigned-url")
     suspend fun getPresignedUrl(
         @Query("filename") filename: String
@@ -137,16 +134,9 @@ interface ApiService {
         @Field("imageUrl") imageUrl: String,
         @Field("caption") caption: String,
         @Field("visibility") visibility: String,
-        @Field("format") format: String
+        @Field("format") format: String,
+        @Field("isSocial") isSocial: Boolean = false
     ): Response<CreatePostResponse>
-
-    @Multipart
-    @POST("api/posts")
-    suspend fun createPost(
-        @Part image: MultipartBody.Part,
-        @Part("caption") caption: RequestBody,
-        @Part("visibility") visibility: RequestBody
-    ): retrofit2.Response<PostResponse>
 
     // Get home feed
     @GET("api/posts/feed")
@@ -162,6 +152,20 @@ interface ApiService {
         @Query("lastPostId") lastPostId: String? = null,
         @Query("limit") limit: Int = 12
     ): Response<FeedResponse>
+
+    @GET("api/posts/social")
+    suspend fun getSocialFeed(
+        @Query("lastPostId") lastPostId: String? = null,
+        @Query("limit") limit: Int = 10
+    ): Response<FeedResponse>
+
+    @Multipart
+    @POST("api/posts")
+    suspend fun createPost(
+        @Part image: MultipartBody.Part,
+        @Part("caption") caption: RequestBody,
+        @Part("visibility") visibility: RequestBody
+    ): retrofit2.Response<PostResponse>
 
     // ==================== Post Interactions ====================
 
