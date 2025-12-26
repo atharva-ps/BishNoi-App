@@ -31,6 +31,7 @@ fun MembersScreen(
     onNavigateToCreatePost: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToNews: () -> Unit,
+    onNavigateToSocial: () -> Unit,
     viewModel: MembersViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -119,8 +120,8 @@ fun MembersScreen(
                 selectedRoute = "members",
                 onHomeClick = onNavigateToHome,
                 onNewsClick = onNavigateToNews,
-                onMembersClick = { /* Already here */ },
                 onCreatePostClick = onNavigateToCreatePost,
+                onSocialClick = onNavigateToSocial,
                 onProfileClick = { onNavigateToProfile("") } // Will navigate to own profile
             )
         },

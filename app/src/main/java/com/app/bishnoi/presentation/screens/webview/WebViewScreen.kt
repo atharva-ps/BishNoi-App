@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import android.content.Intent
 import android.webkit.WebChromeClient
+import androidx.activity.compose.BackHandler
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,31 +150,3 @@ fun WebViewScreen(
     }
 }
 
-// Handle back press
-@Composable
-fun BackHandler(enabled: Boolean = true, onBack: () -> Unit) {
-    val currentOnBack by rememberUpdatedState(onBack)
-    val backCallback = remember {
-        object : androidx.activity.OnBackPressedCallback(enabled) {
-            override fun handleOnBackPressed() {
-                currentOnBack()
-            }
-        }
-    }
-
-    DisposableEffect(enabled) {
-        backCallback.isEnabled = enabled
-        onDispose {
-            backCallback.remove()
-        }
-    }
-
-    val backDispatcher = LocalContext.current as? androidx.activity.ComponentActivity
-
-    DisposableEffect(backDispatcher) {
-        backDispatcher?.onBackPressedDispatcher?.addCallback(backCallback)
-        onDispose {
-            backCallback.remove()
-        }
-    }
-}

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
@@ -147,14 +148,15 @@ fun HomeScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // ✅ Social Icon (NEW)
-                        IconButton(onClick = onNavigateToSocial) {
+                        IconButton(onClick = onNavigateToMembers) {
                             Icon(
-                                imageVector = Icons.Default.Groups,  // or Icons.Default.Public or Icons.Default.Groups
-                                contentDescription = "Social",
+                                imageVector = Icons.Default.Group,  // or Icons.Default.Public or Icons.Default.Groups
+                                contentDescription = "Member",
                                 modifier = Modifier.size(28.dp)
                             )
                         }
+
+
 
                         IconButton(
                             onClick = {
@@ -187,7 +189,7 @@ fun HomeScreen(
                 selectedRoute = "home",
                 onHomeClick = { /* Already on home */ },
                 onNewsClick = onNavigateToNews,
-                onMembersClick = onNavigateToMembers,
+                onSocialClick = onNavigateToSocial,
                 onCreatePostClick = onNavigateToCreatePost,
                 onProfileClick = {
                     uiState.currentUser?.id?.let { onNavigateToProfile(it) }

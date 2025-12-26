@@ -145,8 +145,8 @@ fun NavGraph(
                     onNavigateBack = {
                         navController.popBackStack()
                     },
-                    onNavigateToMembers = {  // ✅ Add this
-                        navController.navigate(Screen.Members.route)
+                    onNavigateToSocial = {  // ✅ NEW
+                        navController.navigate(Screen.Social.route)
                     },
                     onNavigateToProfile = { userId ->
                         navController.navigate(Screen.Profile.createRoute(userId))
@@ -186,8 +186,8 @@ fun NavGraph(
                     onNavigateToFollowing = { userId ->
                         navController.navigate(Screen.Following.createRoute(userId))
                     },
-                    onNavigateToMembers = {  // ✅ Add
-                        navController.navigate(Screen.Members.route)
+                    onNavigateToSocial = {  // ✅ NEW
+                        navController.navigate(Screen.Social.route)
                     },
                     onNavigateToNews = {  // ✅ NEW (if ProfileScreen has bottom nav)
                         navController.navigate(Screen.News.route)
@@ -236,6 +236,9 @@ fun NavGraph(
                     },
                     onNavigateToNews = {  // ✅ NEW (if MembersScreen has bottom nav)
                         navController.navigate(Screen.News.route)
+                    },
+                    onNavigateToSocial = {  // ✅ NEW
+                        navController.navigate(Screen.Social.route)
                     }
                 )
             }

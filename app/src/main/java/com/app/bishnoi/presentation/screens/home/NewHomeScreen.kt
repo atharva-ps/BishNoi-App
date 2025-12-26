@@ -26,7 +26,7 @@ fun NewHomeScreen(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToCreatePost: () -> Unit,
     onNavigateToSearch: () -> Unit,
-    onNavigateToMembers: () -> Unit,
+    onNavigateToSocial: () -> Unit,
     onNavigateToNews: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -86,7 +86,7 @@ fun NewHomeScreen(
                 selectedRoute = "home",
                 onHomeClick = { /* Already on home */ },
                 onNewsClick = onNavigateToNews,
-                onMembersClick = onNavigateToMembers,
+                onSocialClick = onNavigateToSocial,
                 onCreatePostClick = onNavigateToCreatePost,
                 onProfileClick = {
                     uiState.currentUser?.id?.let { onNavigateToProfile(it) }

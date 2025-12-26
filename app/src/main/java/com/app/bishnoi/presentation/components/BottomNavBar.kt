@@ -3,10 +3,12 @@ package com.app.bishnoi.presentation.components
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Groups2
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Groups2
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.People
@@ -22,7 +24,7 @@ fun BottomNavBar(
     selectedRoute: String,
     onHomeClick: () -> Unit,
     onNewsClick: () -> Unit,
-    onMembersClick: () -> Unit,  // ✅ Add Members
+    onSocialClick: () -> Unit,  // ✅ Add Members
     onCreatePostClick: () -> Unit,
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -95,12 +97,12 @@ fun BottomNavBar(
 
         // ✅ Members
         NavigationBarItem(
-            selected = selectedRoute == "members",
-            onClick = onMembersClick,
+            selected = selectedRoute == "social",
+            onClick = onSocialClick,
             icon = {
                 Icon(
-                    imageVector = if (selectedRoute == "members") Icons.Filled.People else Icons.Outlined.People,
-                    contentDescription = "Members",
+                    imageVector = if (selectedRoute == "social") Icons.Filled.Groups2 else Icons.Outlined.Groups2,
+                    contentDescription = "social",
                     modifier = Modifier.size(28.dp)
                 )
             },

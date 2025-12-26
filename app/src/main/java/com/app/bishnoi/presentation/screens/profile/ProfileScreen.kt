@@ -42,7 +42,7 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToHome: () -> Unit,
-    onNavigateToMembers: () -> Unit,  // ✅ Add
+    onNavigateToSocial: () -> Unit,  // ✅ Add
     onNavigateToCreatePost: () -> Unit,
     onNavigateToFollowers: (String) -> Unit,
     onNavigateToFollowing: (String) -> Unit,
@@ -119,7 +119,7 @@ fun ProfileScreen(
                 selectedRoute = "profile",
                 onHomeClick = onNavigateToHome,
                 onNewsClick = onNavigateToNews,
-                onMembersClick = onNavigateToMembers,
+                onSocialClick = onNavigateToSocial,
                 onCreatePostClick = onNavigateToCreatePost,
                 onProfileClick = { /* Already on profile */ }
             )

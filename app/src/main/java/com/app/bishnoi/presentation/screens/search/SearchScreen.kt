@@ -26,7 +26,7 @@ import com.app.bishnoi.presentation.screens.home.HomeViewModel
 fun SearchScreen(
     onNavigateBack: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
-    onNavigateToMembers: () -> Unit,
+    onNavigateToSocial: () -> Unit,
     onNavigateToNews: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -78,7 +78,7 @@ fun SearchScreen(
                 selectedRoute = "",
                 onHomeClick = onNavigateBack,
                 onNewsClick = onNavigateToNews,
-                onMembersClick = onNavigateToMembers,
+                onSocialClick = onNavigateToSocial,
                 onCreatePostClick = { /* TODO */ },
                 onProfileClick = {
                     uiState.currentUser?.id?.let { onNavigateToProfile(it) }

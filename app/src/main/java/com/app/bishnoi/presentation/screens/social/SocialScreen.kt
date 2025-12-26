@@ -45,6 +45,7 @@ fun SocialScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val playStoreUrl = "https://play.google.com/store/apps/details?id=com.app.bishnoi"
 
     val scope = rememberCoroutineScope()
 
@@ -205,7 +206,7 @@ fun SocialScreen(
                                         ShareUtils.shareImage(
                                             context = context,
                                             imageFile = imageFile,
-                                            text = "Check out this post on BishNoi! ${post.caption}"
+                                            text = "बिश्नोई समाज से जुड़ने के लिए अभी बिश्नोई ऐप डाउनलोड करें\n$playStoreUrl"
                                         )
                                     } else {
                                         Toast.makeText(
