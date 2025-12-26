@@ -31,6 +31,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.app.bishnoi.domain.model.News
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.draw.alpha
 import kotlinx.coroutines.delay
 
@@ -38,7 +40,8 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NewsScreen(
-    viewModel: NewsViewModel = hiltViewModel()
+    viewModel: NewsViewModel = hiltViewModel(),
+    onNavigateToWebView: (url: String, title: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -52,6 +55,18 @@ fun NewsScreen(
     }
 
     Scaffold(
+        topBar = {
+            // ✅ Category tabs
+            if (uiState.allCategories.isNotEmpty()) {
+                CategoryTabRow(
+                    categories = uiState.allCategories,
+                    selectedCategory = uiState.selectedCategory,
+                    onCategorySelected = { category ->
+                        viewModel.selectCategory(category)
+                    }
+                )
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(
@@ -60,24 +75,24 @@ fun NewsScreen(
                 .padding(padding)
         ) {
             when {
-                uiState.isLoading && uiState.newsList.isEmpty() -> {
+                // ✅ Use filteredNewsList instead of newsList
+                uiState.isLoading && uiState.filteredNewsList.isEmpty() -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                uiState.newsList.isNotEmpty() -> {
-                    val pagerState = rememberPagerState(pageCount = { uiState.newsList.size })
+                uiState.filteredNewsList.isNotEmpty() -> {
+                    val pagerState = rememberPagerState(pageCount = { uiState.filteredNewsList.size })
 
                     VerticalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize()
                     ) { page ->
                         NewsCard(
-                            newsItem = uiState.newsList[page],
+                            newsItem = uiState.filteredNewsList[page],
                             onTitleClick = { externalLink ->
                                 externalLink?.let {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(it))
-                                    context.startActivity(intent)
+                                    onNavigateToWebView(it, uiState.filteredNewsList[page].title)
                                 }
                             },
                             onShareClick = { newsItem ->
@@ -95,11 +110,38 @@ fun NewsScreen(
                         )
                     }
 
-                    // Load more when reaching end
+                    // Load more when reaching end (only for "My Feed")
                     LaunchedEffect(pagerState.currentPage) {
-                        if (pagerState.currentPage >= uiState.newsList.size - 3) {
+                        if (uiState.selectedCategory == "My Feed" &&
+                            pagerState.currentPage >= uiState.filteredNewsList.size - 3) {
                             viewModel.loadNextPage()
                         }
+                    }
+                }
+                uiState.filteredNewsList.isEmpty() && !uiState.isLoading -> {
+                    // ✅ Empty state for category
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "📰",
+                            style = MaterialTheme.typography.displayLarge
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = "No news in ${uiState.selectedCategory}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Try selecting a different category",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
                 uiState.error != null -> {
@@ -122,6 +164,77 @@ fun NewsScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+// ✅ Category Tab Row
+@Composable
+fun CategoryTabRow(
+    categories: List<String>,
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 4.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(scrollState)
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            categories.forEach { category ->
+                CategoryTab(
+                    category = category,
+                    isSelected = category == selectedCategory,
+                    onClick = { onCategorySelected(category) }
+                )
+            }
+        }
+    }
+}
+
+// ✅ Individual Category Tab
+@Composable
+fun CategoryTab(
+    category: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (isSelected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    }
+
+    val textColor = if (isSelected) {
+        Color.White
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Surface(
+        onClick = onClick,
+        color = backgroundColor,
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.height(36.dp)
+    ) {
+        Box(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = category,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = textColor,
+                maxLines = 1
+            )
         }
     }
 }

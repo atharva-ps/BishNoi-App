@@ -39,6 +39,7 @@ fun PostCard(
     onCommentsClick: () -> Unit = {},
     onMoreClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
+    showShareButton: Boolean = false,
     onDeleteClick: () -> Unit = {},
     onReportClick: () -> Unit = {},
 
@@ -191,28 +192,28 @@ fun PostCard(
                             )
                         }
                         // ✅ Add Share option for all posts
-                        DropdownMenuItem(
-                            text = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Share,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                    Text(
-                                        text = "Share",
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            },
-                            onClick = {
-                                showMenu = false
-                                onShareClick()  // ✅ New callback
-                            }
-                        )
+//                        DropdownMenuItem(
+//                            text = {
+//                                Row(
+//                                    verticalAlignment = Alignment.CenterVertically,
+//                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+//                                ) {
+//                                    Icon(
+//                                        imageVector = Icons.Default.Share,
+//                                        contentDescription = null,
+//                                        tint = MaterialTheme.colorScheme.primary
+//                                    )
+//                                    Text(
+//                                        text = "Share",
+//                                        color = MaterialTheme.colorScheme.onSurface
+//                                    )
+//                                }
+//                            },
+//                            onClick = {
+//                                showMenu = false
+//                                onShareClick()  // ✅ New callback
+//                            }
+//                        )
                     }
                 }
             }
@@ -255,7 +256,8 @@ fun PostCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                )
+                {
                     // Like - with filled/unfilled heart
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -287,10 +289,23 @@ fun PostCard(
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
+//                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // ✅ Share Button (conditional)
+                    if (showShareButton) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { onShareClick() }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Share",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
-
             }
-
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -325,7 +340,7 @@ fun PostCard(
                         modifier = Modifier.padding(start = 4.dp)
                     ) {
                         Text(
-                            text = "👑 ADMIN",
+                            text = "👑",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.Black,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),

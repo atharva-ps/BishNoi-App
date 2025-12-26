@@ -27,10 +27,16 @@ class NewsViewModel @Inject constructor(
 
     fun loadNews(refresh: Boolean = false) {
         if (refresh) {
-            _uiState.update { it.copy(currentPage = 1, newsList = emptyList(), hasMorePages = true) }
+            _uiState.update {
+                it.copy(
+                    currentPage = 1,
+                    newsList = emptyList(),
+                    filteredNewsList = emptyList(),
+                    hasMorePages = true
+                )
+            }
         }
 
-        // ✅ Don't load if already loading or no more pages
         if (_uiState.value.isLoading || !_uiState.value.hasMorePages) {
             return
         }
@@ -44,50 +50,42 @@ class NewsViewModel @Inject constructor(
                     is Resource.Success -> {
                         val newsList = result.data ?: emptyList()
                         val currentList = if (refresh) emptyList() else _uiState.value.newsList
-                        // ✅ Check if we got fewer items than requested (no more pages)
-                        val hasMore = newsList.size >= 20  // 20 is perPage from API call
+                        val updatedList = currentList + newsList
+
+                        val allCategories = extractCategories(updatedList)
+                        val hasMore = newsList.size >= 20
+
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                newsList = currentList + newsList,
+                                newsList = updatedList,
+                                filteredNewsList = filterByCategory(updatedList, it.selectedCategory),
+                                allCategories = allCategories,
                                 error = null,
                                 isRefreshing = false,
-                                hasMorePages = hasMore  // ✅ Update pagination state
+                                hasMorePages = hasMore
                             )
                         }
                     }
                     is Resource.Error -> {
-                        // ✅ Check if error is "no more pages" - don't show popup
-                        val isPageError = result.message?.contains("page_number", ignoreCase = true) == true ||
-                                result.message?.contains("page number", ignoreCase = true) == true
+                        val isPageError = result.message?.contains("page", ignoreCase = true) == true
 
-                        if (isPageError) {
-                            // Just stop pagination, don't show error
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    hasMorePages = false,
-                                    isRefreshing = false
-                                )
-                            }
-                        } else {
-                            // Show other errors
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    error = result.message,
-                                    isRefreshing = false
-                                )
-                            }
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                hasMorePages = !isPageError,
+                                error = if (isPageError) null else result.message,
+                                isRefreshing = false
+                            )
                         }
-                        }
+                    }
                 }
             }
         }
     }
 
     fun loadNextPage() {
-        if (!_uiState.value.isLoading && _uiState.value.hasMorePages) {  // ✅ Check hasMorePages
+        if (!_uiState.value.isLoading && _uiState.value.hasMorePages) {
             _uiState.update { it.copy(currentPage = it.currentPage + 1) }
             loadNews()
         }
@@ -98,6 +96,33 @@ class NewsViewModel @Inject constructor(
         loadNews(refresh = true)
     }
 
+    fun selectCategory(category: String) {
+        _uiState.update {
+            it.copy(
+                selectedCategory = category,
+                filteredNewsList = filterByCategory(it.newsList, category)
+            )
+        }
+    }
+
+    private fun extractCategories(newsList: List<News>): List<String> {
+        val categoriesSet = mutableSetOf<String>()
+        newsList.forEach { news ->
+            categoriesSet.addAll(news.categories)
+        }
+        return listOf("My Feed") + categoriesSet.sorted()
+    }
+
+    private fun filterByCategory(newsList: List<News>, category: String): List<News> {
+        return if (category == "My Feed") {
+            newsList
+        } else {
+            newsList.filter { news ->
+                news.categories.any { it.equals(category, ignoreCase = true) }
+            }
+        }
+    }
+
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
@@ -105,9 +130,12 @@ class NewsViewModel @Inject constructor(
 
 data class NewsUiState(
     val newsList: List<News> = emptyList(),
+    val filteredNewsList: List<News> = emptyList(),
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val error: String? = null,
     val currentPage: Int = 1,
-    val hasMorePages: Boolean = true  // ✅ NEW: Track if more pages exist
+    val hasMorePages: Boolean = true,
+    val selectedCategory: String = "My Feed",
+    val allCategories: List<String> = listOf("My Feed")
 )

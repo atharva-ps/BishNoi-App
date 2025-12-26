@@ -252,6 +252,7 @@ private fun SocialFeed(
             PostCard(
                 post = post,
                 currentUserId = currentUserId,
+                showShareButton = true,
                 onUserClick = onUserClick,
                 onLikeClick = { onToggleLike(post) },
                 onCommentsClick = { onPostClick(post) },

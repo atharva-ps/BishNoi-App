@@ -29,7 +29,9 @@ import com.app.bishnoi.presentation.screens.profile.EditProfileScreen
 import com.app.bishnoi.presentation.screens.search.SearchScreen
 import com.app.bishnoi.presentation.screens.settings.SettingsScreen
 import com.app.bishnoi.presentation.screens.social.SocialScreen
+import com.app.bishnoi.presentation.screens.webview.WebViewScreen
 import com.app.bishnoi.utils.TokenManager
+import java.net.URLDecoder
 
 @Composable
 fun NavGraph(
@@ -130,7 +132,11 @@ fun NavGraph(
             }
             // ✅ NEWS SCREEN (NEW)
             composable(route = Screen.News.route) {
-                NewsScreen()
+                NewsScreen(
+                    onNavigateToWebView = { url, title ->
+                        navController.navigate(Screen.WebView.createRoute(url, title))
+                    }
+                )
             }
 
             // In MainGraph, add Search screen:
@@ -348,6 +354,27 @@ fun NavGraph(
                         }
                     )
                 }
+            }
+            composable(
+                route = Screen.WebView.route,
+                arguments = listOf(
+                    navArgument("url") { type = NavType.StringType },
+                    navArgument("title") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""
+                val encodedTitle = backStackEntry.arguments?.getString("title") ?: "News"
+
+                val url = URLDecoder.decode(encodedUrl, "UTF-8")
+                val title = URLDecoder.decode(encodedTitle, "UTF-8")
+
+                WebViewScreen(
+                    url = url,
+                    title = title,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }

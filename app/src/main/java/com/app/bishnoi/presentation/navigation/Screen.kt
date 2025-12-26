@@ -38,4 +38,11 @@ sealed class Screen(val route: String) {
 
     object Social : Screen("social")
 
+    object WebView : Screen("webview/{url}/{title}") {
+        fun createRoute(url: String, title: String): String {
+            val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
+            val encodedTitle = java.net.URLEncoder.encode(title, "UTF-8")
+            return "webview/$encodedUrl/$encodedTitle"
+        }
+    }
 }

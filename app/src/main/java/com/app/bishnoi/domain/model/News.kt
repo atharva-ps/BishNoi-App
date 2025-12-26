@@ -8,5 +8,5 @@ data class News(
     val source: String,
     val externalLink: String?,
     val publishedTime: String,
-    val categories: List<String>
+    val categories: List<String> = emptyList()
 )

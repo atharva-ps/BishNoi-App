@@ -15,7 +15,7 @@ data class NewsDto(
     val content: ContentDto,
     @SerializedName("featured_media")
     val featuredMedia: Int,
-    val categories: List<Int>,
+    val categories: List<String>? = null,
     @SerializedName("news-source")
     val newsSource: List<Int>,
     @SerializedName("external_link")
