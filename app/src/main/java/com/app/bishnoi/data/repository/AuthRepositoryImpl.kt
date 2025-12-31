@@ -1,5 +1,6 @@
 package com.app.bishnoi.data.repository
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.app.bishnoi.data.remote.api.ApiService
 import com.app.bishnoi.data.remote.dto.GetEmailRequest
@@ -8,6 +9,7 @@ import com.app.bishnoi.data.remote.dto.RegisterRequest
 import com.app.bishnoi.data.remote.dto.toDomainModel
 import com.app.bishnoi.domain.model.User
 import com.app.bishnoi.domain.repository.AuthRepository
+import com.app.bishnoi.utils.FcmTokenHelper
 import com.app.bishnoi.utils.Resource
 import com.app.bishnoi.utils.TokenManager
 import com.app.bishnoi.utils.parseErrorMessage
@@ -21,7 +23,8 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val firebaseAuth: FirebaseAuth,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val fcmTokenHelper: FcmTokenHelper
 ) : AuthRepository {
 
     override suspend fun register(
@@ -74,6 +77,15 @@ class AuthRepositoryImpl @Inject constructor(
                             name = user.name,
                             isAdmin = isAdmin
                         )
+
+                        // ✅ Step 5: Send FCM token to backend
+                        try {
+                            Log.d("Auth", "Sending FCM token after registration...")
+                            fcmTokenHelper.sendTokenToBackend()
+                        } catch (fcmError: Exception) {
+                            // Don't fail registration if FCM fails
+                            Log.e("Auth", "Failed to send FCM token: ${fcmError.message}")
+                        }
 
                         emit(Resource.Success(user))
                     } else {
@@ -200,6 +212,15 @@ class AuthRepositoryImpl @Inject constructor(
                         name = user.name,
                         isAdmin = isAdmin
                     )
+
+                    // ✅ Step 5: Send FCM token to backend
+                    try {
+                        Log.d("Auth", "Sending FCM token after login...")
+                        fcmTokenHelper.sendTokenToBackend()
+                    } catch (fcmError: Exception) {
+                        // Don't fail login if FCM fails
+                        Log.e("Auth", "Failed to send FCM token: ${fcmError.message}")
+                    }
 
                     emit(Resource.Success(user))
                 } else {

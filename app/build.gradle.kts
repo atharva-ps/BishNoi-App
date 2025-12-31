@@ -15,8 +15,8 @@ android {
         applicationId = "com.app.bishnoi"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "2.1"
+        versionCode = 3
+        versionName = "3.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -124,4 +124,8 @@ dependencies {
 
     // Paging (if you want pagination later)
     implementation("androidx.paging:paging-compose:3.2.1")
+
+    implementation(libs.firebase.messaging)
+
+    implementation("me.saket.swipe:swipe:1.2.0")
 }

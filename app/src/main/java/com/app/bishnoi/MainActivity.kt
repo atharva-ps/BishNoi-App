@@ -19,6 +19,15 @@ import com.app.bishnoi.utils.TokenManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.Manifest
+import android.content.ContentValues.TAG
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -29,8 +38,35 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var apiService: ApiService
 
+    // ✅ ADD THIS: Notification permission launcher
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            println("✅ Notification permission granted")
+        } else {
+            println("⚠️ Notification permission denied")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ✅ Get news link from notification intent
+        val newsLink = intent.getStringExtra("news_link")
+        val newsTitle = intent.getStringExtra("news_title")
+        val notificationType = intent.getStringExtra("notification_type")
+
+        Log.d(TAG, "========================================")
+        Log.d(TAG, "MainActivity onCreate")
+        Log.d(TAG, "========================================")
+        Log.d(TAG, "notification_type: $notificationType")
+        Log.d(TAG, "news_link: $newsLink")
+        Log.d(TAG, "news_title: $newsTitle")
+        Log.d(TAG, "========================================")
+
+        // ✅ Request notification permission for Android 13+
+        requestNotificationPermission()
         setContent {
             BishNoiTheme {
                 var showUpdateDialog by remember { mutableStateOf(false) }
@@ -62,6 +98,19 @@ class MainActivity : ComponentActivity() {
                         Screen.AuthGraph.route
                     }
 
+                    // ✅ Navigate to WebView if notification was clicked
+                    LaunchedEffect(newsLink) {
+                        if (newsLink != null && notificationType == "news") {
+                            Log.d(TAG, "📰 Navigating to WebView: $newsLink")
+                            // Wait for navigation to be ready
+                            kotlinx.coroutines.delay(500)
+
+                            val encodedUrl = Uri.encode(newsLink)
+                            val encodedTitle = Uri.encode(newsTitle ?: "News")
+                            navController.navigate("webview/$encodedUrl/$encodedTitle")
+                        }
+                    }
+
                     NavGraph(
                         navController = navController,
                         startDestination = startDestination,
@@ -78,6 +127,45 @@ class MainActivity : ComponentActivity() {
                             onDismiss = { showUpdateDialog = false }
                         )
                     }
+                }
+            }
+        }
+    }
+
+    // ✅ Handle notification when app is already running
+    override fun onNewIntent(intent: Intent) {  // ✅ Remove the ? (non-nullable)
+        super.onNewIntent(intent)
+        setIntent(intent)
+
+        val newsLink = intent.getStringExtra("news_link")
+        val newsTitle = intent.getStringExtra("news_title")
+        val notificationType = intent.getStringExtra("notification_type")
+
+        Log.d(TAG, "========================================")
+        Log.d(TAG, "MainActivity onNewIntent")
+        Log.d(TAG, "========================================")
+        Log.d(TAG, "notification_type: $notificationType")
+        Log.d(TAG, "news_link: $newsLink")
+        Log.d(TAG, "news_title: $newsTitle")
+        Log.d(TAG, "========================================")
+
+        // TODO: Handle navigation when app is already open
+        // You can use a shared event or ViewModel to trigger navigation
+    }
+
+
+    // ✅ ADD THIS FUNCTION
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    println("✅ Notification permission already granted")
+                }
+                else -> {
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
         }

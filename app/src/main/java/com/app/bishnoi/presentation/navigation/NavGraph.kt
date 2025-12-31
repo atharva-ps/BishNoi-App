@@ -23,6 +23,7 @@ import com.app.bishnoi.presentation.screens.home.HomeScreen
 import com.app.bishnoi.presentation.screens.home.HomeViewModel
 import com.app.bishnoi.presentation.screens.members.MembersScreen
 import com.app.bishnoi.presentation.screens.news.NewsScreen
+import com.app.bishnoi.presentation.screens.notifications.NotificationScreen
 import com.app.bishnoi.presentation.screens.postdetail.PostDetailScreen
 import com.app.bishnoi.presentation.screens.profile.ProfileScreen
 import com.app.bishnoi.presentation.screens.profile.EditProfileScreen
@@ -127,6 +128,25 @@ fun NavGraph(
                     },
                     onNavigateToSocial = {  // ✅ NEW
                         navController.navigate(Screen.Social.route)
+                    },
+                    onNavigateToNotifications = {  // ✅ ADD THIS
+                        navController.navigate(Screen.Notifications.route)
+                    }
+                )
+            }
+
+            // ✅ ADD NOTIFICATION SCREEN
+            // ✅ AFTER (Fixed):
+            composable(route = Screen.Notifications.route) {
+                NotificationScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToPost = { postId ->
+                        navController.popBackStack()
+                    },
+                    onNavigateToProfile = { userId ->
+                        navController.navigate(Screen.Profile.createRoute(userId))
                     }
                 )
             }
@@ -358,11 +378,17 @@ fun NavGraph(
                     )
                 }
             }
+            // In MainGraph section, update WebView route:
             composable(
-                route = Screen.WebView.route,
+                route = "webview/{url}/{title}",  // ✅ Make sure route matches MainActivity
                 arguments = listOf(
-                    navArgument("url") { type = NavType.StringType },
-                    navArgument("title") { type = NavType.StringType }
+                    navArgument("url") {
+                        type = NavType.StringType
+                    },
+                    navArgument("title") {
+                        type = NavType.StringType
+                        defaultValue = "News"  // ✅ Add default value
+                    }
                 )
             ) { backStackEntry ->
                 val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""

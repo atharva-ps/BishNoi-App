@@ -55,6 +55,7 @@ fun HomeScreen(
     onNavigateToMembers: () -> Unit,
     onNavigateToNews: () -> Unit,
     onNavigateToSocial: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -156,17 +157,7 @@ fun HomeScreen(
                             )
                         }
 
-
-
-                        IconButton(
-                            onClick = {
-                                Toast.makeText(
-                                    context,
-                                    "Coming soon",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        ) {
+                        IconButton(onClick = onNavigateToNotifications) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
                                 contentDescription = "Notifications",

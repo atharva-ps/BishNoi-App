@@ -39,6 +39,7 @@ class TokenManager @Inject constructor(
         private const val KEY_USER_EMAIL = "user_email"
         private const val KEY_USER_NAME = "user_name"
         private const val KEY_IS_ADMIN = "is_admin"
+        private const val KEY_FCM_TOKEN = "fcm_token"
         private const val PREFS_NAME = "auth_prefs"
     }
 
@@ -107,6 +108,25 @@ class TokenManager @Inject constructor(
         } catch (e: Exception) {
             println("⚠️ Error saving user data: ${e.message}")
         }
+    }
+
+    // ✅ NEW: FCM Token methods
+    fun saveFcmToken(token: String) {
+        try {
+            sharedPreferences.edit().apply {
+                putString(KEY_FCM_TOKEN, token)
+                apply()
+            }
+            println("✅ FCM Token saved locally")
+        } catch (e: Exception) {
+            println("⚠️ Error saving FCM token: ${e.message}")
+        }
+    }
+
+    fun getFcmToken(): String? = try {
+        sharedPreferences.getString(KEY_FCM_TOKEN, null)
+    } catch (e: Exception) {
+        null
     }
 
     fun getUserId(): String? = try {

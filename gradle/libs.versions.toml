@@ -13,6 +13,7 @@ accompanist = "0.34.0"
 googlePlaces = "3.5.0"
 kotlinxSerializationJson = "1.6.0"
 accompanistPager = "0.34.0"
+firebaseMessaging = "24.1.0"
 
 ucrop = "2.2.8"
 
@@ -98,6 +99,8 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanistPager" }
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanistPager" }
 ucrop = { module = "com.github.yalantis:ucrop", version.ref = "ucrop" }
+
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

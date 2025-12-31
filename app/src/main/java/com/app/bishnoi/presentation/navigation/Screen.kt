@@ -1,5 +1,7 @@
 package com.app.bishnoi.presentation.navigation
 
+import android.net.Uri
+
 sealed class Screen(val route: String) {
     // Auth Routes
     object Login : Screen("login")
@@ -8,6 +10,7 @@ sealed class Screen(val route: String) {
     // Main Routes
     object Home : Screen("home")
     object Search : Screen("search") // ✅ Add this
+    object Notifications : Screen("notifications")
     object Profile : Screen("profile/{userId}") {
         fun createRoute(userId: String) = "profile/$userId"
     }
@@ -38,10 +41,11 @@ sealed class Screen(val route: String) {
 
     object Social : Screen("social")
 
+    // ✅ WebView with default title
     object WebView : Screen("webview/{url}/{title}") {
-        fun createRoute(url: String, title: String): String {
-            val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
-            val encodedTitle = java.net.URLEncoder.encode(title, "UTF-8")
+        fun createRoute(url: String, title: String = "News"): String {  // ✅ Add default value
+            val encodedUrl = Uri.encode(url)  // ✅ Use Uri.encode instead
+            val encodedTitle = Uri.encode(title)
             return "webview/$encodedUrl/$encodedTitle"
         }
     }

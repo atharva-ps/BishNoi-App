@@ -231,4 +231,35 @@ interface ApiService {
     @GET("api/app/config")
     suspend fun getAppConfig(): Response<AppConfigResponse>
 
+    // ==================== Notifications ====================
+
+    // ✅ CHANGE THIS: Send as JSON object, not raw string
+    @POST("api/notifications/token")
+    suspend fun updateFcmToken(
+        @Body request: FcmTokenRequest  // ✅ Use a proper DTO
+    ): Response<MessageResponse>
+
+    @GET("api/notifications")
+    suspend fun getNotifications(
+        @Query("limit") limit: Int = 20,
+        @Query("lastNotificationId") lastNotificationId: String? = null
+    ): Response<NotificationsResponse>
+
+    @PUT("api/notifications/{notificationId}/read")
+    suspend fun markNotificationAsRead(
+        @Path("notificationId") notificationId: String
+    ): Response<MessageResponse>
+
+    @PUT("api/notifications/mark-all-read")
+    suspend fun markAllNotificationsAsRead(): Response<MessageResponse>
+
+    @GET("api/notifications/unread-count")
+    suspend fun getUnreadNotificationCount(): Response<UnreadCountResponse>
+
+    // ✅ ADD THIS
+    @DELETE("api/notifications/{notificationId}")
+    suspend fun deleteNotification(
+        @Path("notificationId") notificationId: String
+    ): Response<MessageResponse>
+
 }
