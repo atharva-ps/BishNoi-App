@@ -99,10 +99,16 @@ fun NewsScreen(
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
                                     putExtra(Intent.EXTRA_SUBJECT, newsItem.title)
-                                    putExtra(
-                                        Intent.EXTRA_TEXT,
-                                        "${newsItem.title}\n\n${newsItem.externalLink}"
-                                    )
+
+                                    // ✅ Enhanced share message
+                                    val shareLink = newsItem.link ?: newsItem.externalLink ?: ""
+                                    val shareMessage = """
+                                        ${newsItem.title}
+                                        ${newsItem.description.take(150)}...
+                                        Read more: $shareLink 
+                                        
+                                        📱Get BishNoi App for latest news https://play.google.com/store/apps/details?id=com.app.bishnoi """.trimIndent()
+                                    putExtra(Intent.EXTRA_TEXT, shareMessage)
                                 }
                                 context.startActivity(Intent.createChooser(shareIntent, "Share via"))
                             },

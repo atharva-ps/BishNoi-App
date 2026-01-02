@@ -67,6 +67,8 @@ class MainActivity : ComponentActivity() {
 
         // ✅ Request notification permission for Android 13+
         requestNotificationPermission()
+        // ✅ Handle deep link or notification intent
+        val deepLinkData = handleIntent(intent)
         setContent {
             BishNoiTheme {
                 var showUpdateDialog by remember { mutableStateOf(false) }
@@ -98,15 +100,14 @@ class MainActivity : ComponentActivity() {
                         Screen.AuthGraph.route
                     }
 
-                    // ✅ Navigate to WebView if notification was clicked
-                    LaunchedEffect(newsLink) {
-                        if (newsLink != null && notificationType == "news") {
-                            Log.d(TAG, "📰 Navigating to WebView: $newsLink")
-                            // Wait for navigation to be ready
+                    // ✅ Navigate to WebView if deep link or notification was clicked
+                    LaunchedEffect(deepLinkData) {
+                        if (deepLinkData != null) {
+                            Log.d(TAG, "📰 Navigating to WebView: ${deepLinkData.url}")
                             kotlinx.coroutines.delay(500)
 
-                            val encodedUrl = Uri.encode(newsLink)
-                            val encodedTitle = Uri.encode(newsTitle ?: "News")
+                            val encodedUrl = Uri.encode(deepLinkData.url)
+                            val encodedTitle = Uri.encode(deepLinkData.title)
                             navController.navigate("webview/$encodedUrl/$encodedTitle")
                         }
                     }
@@ -151,6 +152,63 @@ class MainActivity : ComponentActivity() {
 
         // TODO: Handle navigation when app is already open
         // You can use a shared event or ViewModel to trigger navigation
+    }
+
+    // ✅ Handle intent from deep link or notification
+    private fun handleIntent(intent: Intent): DeepLinkData? {
+        Log.d(TAG, "========================================")
+        Log.d(TAG, "📱 HANDLING INTENT")
+        Log.d(TAG, "========================================")
+        Log.d(TAG, "Action: ${intent.action}")
+        Log.d(TAG, "Data: ${intent.data}")
+
+        // ✅ Priority 1: Check for notification data
+        val newsLink = intent.getStringExtra("news_link")
+        val newsTitle = intent.getStringExtra("news_title")
+        val notificationType = intent.getStringExtra("notification_type")
+
+        if (newsLink != null && notificationType == "news") {
+            Log.d(TAG, "📰 NOTIFICATION INTENT")
+            Log.d(TAG, "notification_type: $notificationType")
+            Log.d(TAG, "news_link: $newsLink")
+            Log.d(TAG, "news_title: $newsTitle")
+            Log.d(TAG, "========================================")
+            return DeepLinkData(url = newsLink, title = newsTitle ?: "News")
+        }
+
+        // ✅ Priority 2: Check for deep link from web
+        val data = intent.data
+        if (data != null && intent.action == Intent.ACTION_VIEW) {
+            Log.d(TAG, "🔗 DEEP LINK INTENT")
+            Log.d(TAG, "Scheme: ${data.scheme}")
+            Log.d(TAG, "Host: ${data.host}")
+            Log.d(TAG, "Path: ${data.path}")
+
+            val fullUrl = data.toString()
+            Log.d(TAG, "Full URL: $fullUrl")
+
+            // Extract title from URL path
+            val pathSegments = data.pathSegments
+            val title = if (pathSegments.isNotEmpty()) {
+                pathSegments.last()
+                    .replace("-", " ")
+                    .split(" ")
+                    .joinToString(" ") { word ->
+                        word.replaceFirstChar { it.uppercase() }
+                    }
+            } else {
+                "News"
+            }
+
+            Log.d(TAG, "Extracted title: $title")
+            Log.d(TAG, "========================================")
+
+            return DeepLinkData(url = fullUrl, title = title)
+        }
+
+        Log.d(TAG, "ℹ️ No deep link or notification data found")
+        Log.d(TAG, "========================================")
+        return null
     }
 
 
@@ -205,5 +263,10 @@ class MainActivity : ComponentActivity() {
         val latestVersion: String,
         val updateMessage: String,
         val playStoreUrl: String
+    )
+    // ✅ Data class for deep link/notification data
+    data class DeepLinkData(
+        val url: String,
+        val title: String
     )
 }

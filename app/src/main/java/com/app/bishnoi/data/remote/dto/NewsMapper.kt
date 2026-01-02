@@ -32,6 +32,7 @@ fun NewsDto.toDomain(): News {
         imageUrl = imageUrl,
         source = newsSourceName,
         externalLink = externalLink,
+        link = link,
         publishedTime = publishedTime,
         categories = categoryNames  // ✅ Now populated correctly
     )

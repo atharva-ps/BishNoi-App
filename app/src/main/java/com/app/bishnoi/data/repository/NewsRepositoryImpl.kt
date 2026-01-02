@@ -31,6 +31,7 @@ class NewsRepositoryImpl @Inject constructor(
                         imageUrl = dto.embedded?.featuredMedia?.firstOrNull()?.sourceUrl,
                         source = extractSourceName(dto.externalLink),
                         externalLink = dto.externalLink,
+                        link = dto.link,
                         publishedTime = formatTime(dto.date),
                         categories = dto.embedded?.terms?.flatten()
                             ?.filter { it.taxonomy == "category" }

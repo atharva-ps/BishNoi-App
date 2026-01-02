@@ -1,6 +1,7 @@
 package com.app.bishnoi.presentation.screens.home
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +30,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.app.bishnoi.presentation.components.DeleteConfirmationDialog
 import com.app.bishnoi.presentation.components.ReportBottomSheet
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.launch
 import com.app.bishnoi.presentation.components.ShareCardGenerator
 import com.app.bishnoi.presentation.components.ShareUtils
@@ -135,15 +138,12 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "BishNoi",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontFamily = BishnoiFont,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 24.sp,
-                            letterSpacing = 0.2.sp,
-                        ),
-                        color = MaterialTheme.colorScheme.onBackground
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_bishnoi),
+                        contentDescription = "BishNoi Logo",
+                        modifier = Modifier
+                            .height(32.dp), // Adjust height to match text size
+                        contentScale = ContentScale.Fit
                     )
 
                     Row(
