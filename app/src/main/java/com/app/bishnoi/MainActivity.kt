@@ -112,6 +112,19 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
+//                    // ✅ Navigate to WebView if notification was clicked
+//                    LaunchedEffect(newsLink) {
+//                        if (newsLink != null && notificationType == "news") {
+//                            Log.d(TAG, "📰 Navigating to WebView: $newsLink")
+//                            // Wait for navigation to be ready
+//                            kotlinx.coroutines.delay(500)
+//
+//                            val encodedUrl = Uri.encode(newsLink)
+//                            val encodedTitle = Uri.encode(newsTitle ?: "News")
+//                            navController.navigate("webview/$encodedUrl/$encodedTitle")
+//                        }
+//                    }
+
                     NavGraph(
                         navController = navController,
                         startDestination = startDestination,
