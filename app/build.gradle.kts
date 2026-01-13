@@ -18,6 +18,7 @@ android {
         versionCode = 4
         versionName = "4.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -128,4 +129,16 @@ dependencies {
     implementation(libs.firebase.messaging)
 
     implementation("me.saket.swipe:swipe:1.2.0")
+
+    //Ads Integration
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.justbaatAds:adsSdk:1.0.8")
+    implementation("com.unity3d.ads-mediation:mediation-sdk:8.9.1")
+    implementation("com.google.android.gms:play-services-appset:16.0.0")
+    implementation ("com.google.android.gms:play-services-ads-identifier:18.1.0")
+    implementation ("com.google.android.gms:play-services-basement:18.1.0")
+    implementation("com.google.android.gms:play-services-ads:24.4.0")
+
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
 }

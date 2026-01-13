@@ -1,7 +1,11 @@
 package com.app.bishnoi.presentation.screens.news
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,7 +38,11 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
+import com.justbaat.ads.sdk.AdSdkManager
+import com.justbaat.ads.sdk.AdSdkManager.showBanner
+import com.justbaat.ads.sdk.AdSdkManager.showInterstitialAd
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -45,12 +53,23 @@ fun NewsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val activity = context as? Activity
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
+    var lastAdShownIndex by remember { mutableIntStateOf(0) }
+
+    // Load Ad Initially
+    LaunchedEffect(Unit) {
+        AdSdkManager.registerSdkReadyCallback {
+            Log.d("NewsScreen", "SDK is ready, now loading Interstitial...")
+            activity?.let {
+                AdSdkManager.loadInterstitialAd(
+                    activity = it,
+                    placementId = "interstitial_placement",
+                    onAdLoaded = { Log.d("NewsScreen", "Interstitial Loaded") },
+                    onAdFailed = { Log.e("NewsScreen", "Interstitial Failed: $it") }
+                )
+            }
         }
     }
 
@@ -118,6 +137,26 @@ fun NewsScreen(
 
                     // Load more when reaching end (only for "My Feed")
                     LaunchedEffect(pagerState.currentPage) {
+                        val currentIndex = pagerState.currentPage
+                        if (currentIndex > 0 && currentIndex % 3 == 0 && currentIndex > lastAdShownIndex) {
+                            lastAdShownIndex = currentIndex
+
+                            // This will show the ad ONLY if it successfully loaded above
+                            activity?.let {
+                                showInterstitialAd(
+                                    activity = it,
+                                    placementId = "interstitial_placement",
+                                    enableClickCounting = true,
+                                    threshold = 1,
+                                    onAdDismissed = {
+                                        // Reload for next time
+                                        AdSdkManager.loadInterstitialAd(it, "interstitial_placement")
+                                    }
+                                )
+                            }
+                        }
+
+                        // Load More Data Logic
                         if (uiState.selectedCategory == "My Feed" &&
                             pagerState.currentPage >= uiState.filteredNewsList.size - 3) {
                             viewModel.loadNextPage()
@@ -252,6 +291,8 @@ fun NewsCard(
     onShareClick: (News) -> Unit,
     showSwipeHint: Boolean = false
 ) {
+    val context = LocalContext.current
+    val activity = context as? Activity
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -501,6 +542,29 @@ fun NewsCard(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
+                }
+                if (activity != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    AndroidView(
+                        modifier = Modifier.fillMaxWidth(),
+                        factory = { ctx ->
+                            FrameLayout(ctx).apply {
+                                layoutParams = ViewGroup.LayoutParams(
+                                    ViewGroup.LayoutParams.MATCH_PARENT,
+                                    ViewGroup.LayoutParams.WRAP_CONTENT
+                                )
+
+                                this.tag = "banner_container_first"
+                                showBanner(
+                                    activity = activity,
+                                    parent = this,
+                                    onAdLoaded = { Log.d("NewsScreen","banner ad loaded") },
+                                    onAdFailed = { error -> Log.d("NewsScreen","banner ad not displayed: $error") }
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }

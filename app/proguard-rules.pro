@@ -31,3 +31,6 @@
 # Coroutines
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
 -keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+
+-keep class com.unity3d.mediation.** { *; }
+-keep class com.ironsource.** { *; }

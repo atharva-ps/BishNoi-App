@@ -1,13 +1,26 @@
 package com.app.bishnoi
 
+import android.Manifest
+import android.content.ContentValues.TAG
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.app.bishnoi.data.remote.api.ApiService
@@ -16,18 +29,10 @@ import com.app.bishnoi.presentation.navigation.NavGraph
 import com.app.bishnoi.presentation.navigation.Screen
 import com.app.bishnoi.ui.theme.BishNoiTheme
 import com.app.bishnoi.utils.TokenManager
+import com.justbaat.ads.sdk.AdSdkManager.initialize
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import android.Manifest
-import android.content.ContentValues.TAG
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
-import android.util.Log
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -64,6 +69,14 @@ class MainActivity : ComponentActivity() {
         Log.d(TAG, "news_link: $newsLink")
         Log.d(TAG, "news_title: $newsTitle")
         Log.d(TAG, "========================================")
+
+        // ads sdk initialization
+        initialize(
+            this,
+            "sample-test-new",
+            { status -> Log.d("BishnoiApp", "SDK Initialized with status: $status") },
+            { Log.d("BishnoiApp", "SDK is fully ready. No ads loaded.") }
+        )
 
         // ✅ Request notification permission for Android 13+
         requestNotificationPermission()

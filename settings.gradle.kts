@@ -14,6 +14,7 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        maven { url = uri("https://justbaat-apps-b325d.web.app")}
         google()
         mavenCentral()
         maven("https://jitpack.io")
