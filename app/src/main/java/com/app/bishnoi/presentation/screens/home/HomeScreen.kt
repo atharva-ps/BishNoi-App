@@ -1,5 +1,7 @@
 package com.app.bishnoi.presentation.screens.home
 
+import android.app.Activity
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,6 +40,7 @@ import com.app.bishnoi.presentation.components.ShareUtils
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import com.app.bishnoi.R
+import com.justbaat.ads.sdk.AdSdkManager
 
 
 private val BishnoiFont = FontFamily(
@@ -63,6 +66,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val activity = context as? Activity
 
 
     val scope = rememberCoroutineScope()
@@ -124,6 +128,19 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        AdSdkManager.registerSdkReadyCallback {
+            activity?.let {
+                AdSdkManager.loadRewarded(
+                    activity = it,
+                    placementId = CREATE_POST_REWARDED_PLACEMENT_ID,
+                    onAdLoaded = { Log.d("HomeScreen", "Rewarded Loaded") },
+                    onAdFailed = { error -> Log.e("HomeScreen", "Rewarded Failed: $error") }
+                )
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             Surface(
@@ -164,7 +181,39 @@ fun HomeScreen(
                                 modifier = Modifier.size(28.dp)
                             )
                         }
-                        IconButton(onClick = onNavigateToSearch) {
+                        IconButton(
+                            onClick = {
+                                if (activity == null) {
+                                    onNavigateToSearch()
+                                    return@IconButton
+                                }
+
+                                AdSdkManager.showRewardedAd(
+                                    activity = activity,
+                                    placementId = CREATE_POST_REWARDED_PLACEMENT_ID,
+                                    enableClickCounting = false,
+                                    threshold = 0,
+                                    onUserEarnedReward = {
+                                        // Reward can be handled here if needed later.
+                                    },
+                                    onAdDismissed = {
+                                        onNavigateToSearch()
+                                        AdSdkManager.loadRewarded(
+                                            activity = activity,
+                                            placementId = CREATE_POST_REWARDED_PLACEMENT_ID
+                                        )
+                                    },
+                                    onAdFailedToShow = { error ->
+                                        Log.e("HomeScreen", "Rewarded failed: $error")
+                                        onNavigateToSearch()
+                                        AdSdkManager.loadRewarded(
+                                            activity = activity,
+                                            placementId = CREATE_POST_REWARDED_PLACEMENT_ID
+                                        )
+                                    }
+                                )
+                            }
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "Search",
@@ -181,7 +230,37 @@ fun HomeScreen(
                 onHomeClick = { /* Already on home */ },
                 onNewsClick = onNavigateToNews,
                 onSocialClick = onNavigateToSocial,
-                onCreatePostClick = onNavigateToCreatePost,
+                onCreatePostClick = {
+                    if (activity == null) {
+                        onNavigateToCreatePost()
+                        return@BottomNavBar
+                    }
+
+                    AdSdkManager.showRewardedAd(
+                        activity = activity,
+                        placementId = CREATE_POST_REWARDED_PLACEMENT_ID,
+                        enableClickCounting = false,
+                        threshold = 0,
+                        onUserEarnedReward = {
+                            // Reward can be handled here if needed later.
+                        },
+                        onAdDismissed = {
+                            onNavigateToCreatePost()
+                            AdSdkManager.loadRewarded(
+                                activity = activity,
+                                placementId = CREATE_POST_REWARDED_PLACEMENT_ID
+                            )
+                        },
+                        onAdFailedToShow = { error ->
+                            Log.e("HomeScreen", "Rewarded failed: $error")
+                            onNavigateToCreatePost()
+                            AdSdkManager.loadRewarded(
+                                activity = activity,
+                                placementId = CREATE_POST_REWARDED_PLACEMENT_ID
+                            )
+                        }
+                    )
+                },
                 onProfileClick = {
                     uiState.currentUser?.id?.let { onNavigateToProfile(it) }
                 }
@@ -292,6 +371,8 @@ fun HomeScreen(
         }
     }
 }
+
+private const val CREATE_POST_REWARDED_PLACEMENT_ID = "rewarded_placement"
 
 @Composable
 private fun HomeFeed(

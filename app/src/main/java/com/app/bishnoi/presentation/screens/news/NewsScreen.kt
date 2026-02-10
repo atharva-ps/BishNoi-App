@@ -1,6 +1,7 @@
 package com.app.bishnoi.presentation.screens.news
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
@@ -57,6 +58,13 @@ fun NewsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     var lastAdShownIndex by remember { mutableIntStateOf(0) }
+    val rewardedPrefs = remember {
+        context.getSharedPreferences(REWARDED_PREFS, Context.MODE_PRIVATE)
+    }
+    var lastRewardedShownAt by remember {
+        mutableLongStateOf(rewardedPrefs.getLong(REWARDED_LAST_SHOWN_KEY, 0L))
+    }
+    var isRewardedShowing by remember { mutableStateOf(false) }
 
     // Load Ad Initially
     LaunchedEffect(Unit) {
@@ -68,6 +76,14 @@ fun NewsScreen(
                     placementId = "interstitial_placement",
                     onAdLoaded = { Log.d("NewsScreen", "Interstitial Loaded") },
                     onAdFailed = { Log.e("NewsScreen", "Interstitial Failed: $it") }
+                )
+            }
+            activity?.let {
+                AdSdkManager.loadRewarded(
+                    activity = it,
+                    placementId = REWARDED_PLACEMENT_ID,
+                    onAdLoaded = { Log.d("NewsScreen", "Rewarded Loaded") },
+                    onAdFailed = { error -> Log.e("NewsScreen", "Rewarded Failed: $error") }
                 )
             }
         }
@@ -110,8 +126,60 @@ fun NewsScreen(
                         NewsCard(
                             newsItem = uiState.filteredNewsList[page],
                             onTitleClick = { externalLink ->
-                                externalLink?.let {
-                                    onNavigateToWebView(it, uiState.filteredNewsList[page].title)
+                                externalLink?.let { link ->
+                                    val title = uiState.filteredNewsList[page].title
+                                    val now = System.currentTimeMillis()
+                                    val isCooldownActive = now - lastRewardedShownAt < REWARDED_COOLDOWN_MILLIS
+                                    val navigateToNews = {
+                                        onNavigateToWebView(link, title)
+                                    }
+
+                                    if (activity == null || isCooldownActive || isRewardedShowing) {
+                                        navigateToNews()
+                                    } else {
+                                        isRewardedShowing = true
+                                        var rewardRecorded = false
+                                        AdSdkManager.showRewardedAd(
+                                            activity = activity,
+                                            placementId = REWARDED_PLACEMENT_ID,
+                                            enableClickCounting = false,
+                                            threshold = 0,
+                                            onUserEarnedReward = {
+                                                if (!rewardRecorded) {
+                                                    rewardRecorded = true
+                                                    val completedAt = System.currentTimeMillis()
+                                                    rewardedPrefs.edit()
+                                                        .putLong(REWARDED_LAST_SHOWN_KEY, completedAt)
+                                                        .apply()
+                                                    lastRewardedShownAt = completedAt
+                                                }
+                                            },
+                                            onAdDismissed = {
+                                                if (!rewardRecorded) {
+                                                    val completedAt = System.currentTimeMillis()
+                                                    rewardedPrefs.edit()
+                                                        .putLong(REWARDED_LAST_SHOWN_KEY, completedAt)
+                                                        .apply()
+                                                    lastRewardedShownAt = completedAt
+                                                }
+                                                isRewardedShowing = false
+                                                navigateToNews()
+                                                AdSdkManager.loadRewarded(
+                                                    activity = activity,
+                                                    placementId = REWARDED_PLACEMENT_ID
+                                                )
+                                            },
+                                            onAdFailedToShow = { error ->
+                                                Log.e("NewsScreen", "Rewarded failed: $error")
+                                                isRewardedShowing = false
+                                                navigateToNews()
+                                                AdSdkManager.loadRewarded(
+                                                    activity = activity,
+                                                    placementId = REWARDED_PLACEMENT_ID
+                                                )
+                                            }
+                                        )
+                                    }
                                 }
                             },
                             onShareClick = { newsItem ->
@@ -545,3 +613,8 @@ fun AnimatedSwipeHint() {
         }
     }
 }
+
+private const val REWARDED_PREFS = "news_rewarded_ad_prefs"
+private const val REWARDED_LAST_SHOWN_KEY = "last_rewarded_shown_at"
+private const val REWARDED_COOLDOWN_MILLIS = 15 * 60 * 1000L
+private const val REWARDED_PLACEMENT_ID = "rewarded_placement"

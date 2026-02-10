@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
         // ads sdk initialization
         initialize(
             this,
-            "sample-test-new",
+            "bishnoi",
             { status -> Log.d("BishnoiApp", "SDK Initialized with status: $status") },
             { Log.d("BishnoiApp", "SDK is fully ready. No ads loaded.") }
         )

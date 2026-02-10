@@ -46,6 +46,16 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "com.google.android.gms" &&
+            (requested.name == "play-services-ads" || requested.name == "play-services-ads-lite")
+        ) {
+            useVersion("24.4.0")
+        }
+    }
+}
+
 dependencies {
     // Compose
     implementation(libs.androidx.core.ktx)
@@ -134,7 +144,6 @@ dependencies {
     //Ads Integration
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.justbaatAds:adsSdk:1.0.8")
-    implementation("com.unity3d.ads-mediation:mediation-sdk:8.9.1")
     implementation("com.google.android.gms:play-services-appset:16.0.0")
     implementation ("com.google.android.gms:play-services-ads-identifier:18.1.0")
     implementation ("com.google.android.gms:play-services-basement:18.1.0")
@@ -142,4 +151,11 @@ dependencies {
 
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
+
+    implementation("com.google.ads.mediation:ironsource:8.10.0.0")
+    implementation("com.google.ads.mediation:inmobi:10.8.0.0")
+    implementation("com.unity3d.ads:unity-ads:4.15.1")
+    implementation("com.google.ads.mediation:unity:4.15.1.0")
+    implementation("com.google.ads.mediation:pangle:7.8.5.9.0")
+    implementation("com.google.ads.mediation:vungle:7.5.0.1")
 }
