@@ -15,6 +15,7 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         maven { url = uri("https://justbaat-apps-b325d.web.app")}
+        maven { url = uri("https://android-sdk.is.com/") }
         maven { url = uri("https://artifact.bytedance.com/repository/pangle/") }
         google()
         mavenCentral()
