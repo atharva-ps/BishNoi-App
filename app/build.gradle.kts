@@ -15,9 +15,10 @@ android {
         applicationId = "com.app.bishnoi"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "4.1"
+        versionCode = 5
+        versionName = "4.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -45,6 +46,16 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "com.google.android.gms" &&
+            (requested.name == "play-services-ads" || requested.name == "play-services-ads-lite")
+        ) {
+            useVersion("24.4.0")
+        }
+    }
+}
+
 dependencies {
     // Compose
     implementation(libs.androidx.core.ktx)
@@ -61,6 +72,7 @@ dependencies {
 
     // Hilt
     implementation(libs.hilt.android)
+    implementation(libs.androidx.compose.foundation)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
@@ -128,4 +140,19 @@ dependencies {
     implementation(libs.firebase.messaging)
 
     implementation("me.saket.swipe:swipe:1.2.0")
+
+    //Ads Integration
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.justbaatAds:adsSdk:1.0.8")
+    implementation("com.google.android.gms:play-services-ads:24.4.0")
+
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+
+    implementation("com.google.ads.mediation:ironsource:8.10.0.0")
+    implementation("com.google.ads.mediation:inmobi:10.8.0.0")
+    implementation("com.unity3d.ads:unity-ads:4.15.1")
+    implementation("com.google.ads.mediation:unity:4.15.1.0")
+    implementation("com.google.ads.mediation:pangle:7.8.5.9.0")
+    implementation("com.google.ads.mediation:vungle:7.5.0.1")
 }

@@ -27,6 +27,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyClOKf1L5tL6gvto8tYd46sdyg592I-o7I" />
 
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9148477234753146~2773792905"/>
+
         <!-- ✅ ADD FCM SERVICE -->
         <service
             android:name=".services.MyFirebaseMessagingService"

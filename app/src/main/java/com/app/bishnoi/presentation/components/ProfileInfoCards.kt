@@ -1,5 +1,9 @@
 package com.app.bishnoi.presentation.components
 
+import android.app.Activity
+import android.util.Log
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -8,27 +12,31 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.app.bishnoi.domain.model.Profile
+import com.justbaat.ads.sdk.AdSdkManager
 
 @Composable
 fun ProfileInfoSection(profile: Profile) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    val context = LocalContext.current
+    val activity = context as? Activity
+    val cardBlocks = mutableListOf<@Composable () -> Unit>()
+
+    // Basic Info Card
+    if (profile.gender.isNotEmpty() ||
+        profile.personalDetails.maritalStatus.isNotEmpty() ||
+        profile.dob.isNotEmpty()
     ) {
-        // Basic Info Card
-        if (profile.gender.isNotEmpty() ||
-            profile.personalDetails.maritalStatus.isNotEmpty() ||
-            profile.dob.isNotEmpty()) {
+        cardBlocks.add {
             InfoCard(
                 title = "BASIC INFO",
                 icon = Icons.Default.Person,
@@ -46,10 +54,13 @@ fun ProfileInfoSection(profile: Profile) {
                 }
             }
         }
+    }
 
-        // Profession Card
-        if (profile.professionalDetails.occupation.isNotEmpty() ||
-            profile.professionalDetails.companyName.isNotEmpty()) {
+    // Profession Card
+    if (profile.professionalDetails.occupation.isNotEmpty() ||
+        profile.professionalDetails.companyName.isNotEmpty()
+    ) {
+        cardBlocks.add {
             InfoCard(
                 title = "PROFESSION",
                 icon = Icons.Default.Work,
@@ -79,9 +90,11 @@ fun ProfileInfoSection(profile: Profile) {
                 }
             }
         }
+    }
 
-        // Education Card
-        if (profile.professionalDetails.education.isNotEmpty()) {
+    // Education Card
+    if (profile.professionalDetails.education.isNotEmpty()) {
+        cardBlocks.add {
             InfoCard(
                 title = "EDUCATION",
                 icon = Icons.Default.School,
@@ -127,9 +140,11 @@ fun ProfileInfoSection(profile: Profile) {
                 }
             }
         }
+    }
 
-        // Family Details Card
-        if (profile.personalDetails.relationships.isNotEmpty()) {
+    // Family Details Card
+    if (profile.personalDetails.relationships.isNotEmpty()) {
+        cardBlocks.add {
             InfoCard(
                 title = "FAMILY DETAILS",
                 icon = Icons.Default.People,
@@ -143,11 +158,14 @@ fun ProfileInfoSection(profile: Profile) {
                 }
             }
         }
+    }
 
-        // Current Details Card
-        val currentAddress = profile.address.current
-        if (currentAddress.address.isNotEmpty() ||
-            currentAddress.city.isNotEmpty()) {
+    // Current Details Card
+    val currentAddress = profile.address.current
+    if (currentAddress.address.isNotEmpty() ||
+        currentAddress.city.isNotEmpty()
+    ) {
+        cardBlocks.add {
             InfoCard(
                 title = "CURRENT DETAILS",
                 icon = Icons.Default.LocationOn,
@@ -185,11 +203,14 @@ fun ProfileInfoSection(profile: Profile) {
                 }
             }
         }
+    }
 
-        // Origin Details Card
-        val nativeAddress = profile.address.native
-        if (nativeAddress.city.isNotEmpty() ||
-            profile.personalDetails.subCaste.isNotEmpty()) {
+    // Origin Details Card
+    val nativeAddress = profile.address.native
+    if (nativeAddress.city.isNotEmpty() ||
+        profile.personalDetails.subCaste.isNotEmpty()
+    ) {
+        cardBlocks.add {
             InfoCard(
                 title = "ORIGIN DETAILS",
                 icon = Icons.Default.Home,
@@ -218,15 +239,17 @@ fun ProfileInfoSection(profile: Profile) {
                 }
             }
         }
+    }
 
-        // Social Media Links Card
-        val social = profile.socialMedia
-        if (social.facebook.isNotEmpty() ||
-            social.instagram.isNotEmpty() ||
-            social.twitter.isNotEmpty() ||
-            social.linkedin.isNotEmpty() ||
-            social.youtube.isNotEmpty()) {
-
+    // Social Media Links Card
+    val social = profile.socialMedia
+    if (social.facebook.isNotEmpty() ||
+        social.instagram.isNotEmpty() ||
+        social.twitter.isNotEmpty() ||
+        social.linkedin.isNotEmpty() ||
+        social.youtube.isNotEmpty()
+    ) {
+        cardBlocks.add {
             InfoCard(
                 title = "SOCIAL MEDIA LINKS",
                 icon = Icons.Default.Share,
@@ -255,6 +278,63 @@ fun ProfileInfoSection(profile: Profile) {
             }
         }
     }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        cardBlocks.forEachIndexed { index, block ->
+            Box(modifier = Modifier.fillMaxWidth()) {
+                block()
+            }
+            if ((index + 1) % 2 == 0 && activity != null) {
+                val adIndex = (index + 1) / 2
+                key(adIndex) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                         NativeAdCard(activity = activity, adIndex = adIndex)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NativeAdCard(activity: Activity, adIndex: Int) {
+    val adTag = "native_ad_loaded_$adIndex"
+    AndroidView(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+        factory = { ctx ->
+            FrameLayout(ctx).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            }
+        },
+        update = { view ->
+            if (view.tag != adTag) {
+                view.tag = adTag
+                AdSdkManager.registerSdkReadyCallback {
+                    view.post {
+                        AdSdkManager.showNativeAd(
+                            activity = activity,
+                            parent = view,
+                            onAdLoaded = { Log.d("ProfileInfo", "Native ad loaded") },
+                            onAdFailed = { error ->
+                                Log.e("ProfileInfo", "Native ad failed: $error")
+                                view.tag = null
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    )
 }
 
 @Composable

@@ -1,7 +1,12 @@
 package com.app.bishnoi.presentation.screens.news
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,7 +39,11 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
+import com.justbaat.ads.sdk.AdSdkManager
+import com.justbaat.ads.sdk.AdSdkManager.showBanner
+import com.justbaat.ads.sdk.AdSdkManager.showInterstitialAd
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -45,12 +54,38 @@ fun NewsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val activity = context as? Activity
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
+    var lastAdShownIndex by remember { mutableIntStateOf(0) }
+    val rewardedPrefs = remember {
+        context.getSharedPreferences(REWARDED_PREFS, Context.MODE_PRIVATE)
+    }
+    var lastRewardedShownAt by remember {
+        mutableLongStateOf(rewardedPrefs.getLong(REWARDED_LAST_SHOWN_KEY, 0L))
+    }
+    var isRewardedShowing by remember { mutableStateOf(false) }
+
+    // Load Ad Initially
+    LaunchedEffect(Unit) {
+        AdSdkManager.registerSdkReadyCallback {
+            Log.d("NewsScreen", "SDK is ready, now loading Interstitial...")
+            activity?.let {
+                AdSdkManager.loadInterstitialAd(
+                    activity = it,
+                    placementId = "interstitial_placement",
+                    onAdLoaded = { Log.d("NewsScreen", "Interstitial Loaded") },
+                    onAdFailed = { Log.e("NewsScreen", "Interstitial Failed: $it") }
+                )
+            }
+            activity?.let {
+                AdSdkManager.loadRewarded(
+                    activity = it,
+                    placementId = REWARDED_PLACEMENT_ID,
+                    onAdLoaded = { Log.d("NewsScreen", "Rewarded Loaded") },
+                    onAdFailed = { error -> Log.e("NewsScreen", "Rewarded Failed: $error") }
+                )
+            }
         }
     }
 
@@ -91,8 +126,60 @@ fun NewsScreen(
                         NewsCard(
                             newsItem = uiState.filteredNewsList[page],
                             onTitleClick = { externalLink ->
-                                externalLink?.let {
-                                    onNavigateToWebView(it, uiState.filteredNewsList[page].title)
+                                externalLink?.let { link ->
+                                    val title = uiState.filteredNewsList[page].title
+                                    val now = System.currentTimeMillis()
+                                    val isCooldownActive = now - lastRewardedShownAt < REWARDED_COOLDOWN_MILLIS
+                                    val navigateToNews = {
+                                        onNavigateToWebView(link, title)
+                                    }
+
+                                    if (activity == null || isCooldownActive || isRewardedShowing) {
+                                        navigateToNews()
+                                    } else {
+                                        isRewardedShowing = true
+                                        var rewardRecorded = false
+                                        AdSdkManager.showRewardedAd(
+                                            activity = activity,
+                                            placementId = REWARDED_PLACEMENT_ID,
+                                            enableClickCounting = false,
+                                            threshold = 0,
+                                            onUserEarnedReward = {
+                                                if (!rewardRecorded) {
+                                                    rewardRecorded = true
+                                                    val completedAt = System.currentTimeMillis()
+                                                    rewardedPrefs.edit()
+                                                        .putLong(REWARDED_LAST_SHOWN_KEY, completedAt)
+                                                        .apply()
+                                                    lastRewardedShownAt = completedAt
+                                                }
+                                            },
+                                            onAdDismissed = {
+                                                if (!rewardRecorded) {
+                                                    val completedAt = System.currentTimeMillis()
+                                                    rewardedPrefs.edit()
+                                                        .putLong(REWARDED_LAST_SHOWN_KEY, completedAt)
+                                                        .apply()
+                                                    lastRewardedShownAt = completedAt
+                                                }
+                                                isRewardedShowing = false
+                                                navigateToNews()
+                                                AdSdkManager.loadRewarded(
+                                                    activity = activity,
+                                                    placementId = REWARDED_PLACEMENT_ID
+                                                )
+                                            },
+                                            onAdFailedToShow = { error ->
+                                                Log.e("NewsScreen", "Rewarded failed: $error")
+                                                isRewardedShowing = false
+                                                navigateToNews()
+                                                AdSdkManager.loadRewarded(
+                                                    activity = activity,
+                                                    placementId = REWARDED_PLACEMENT_ID
+                                                )
+                                            }
+                                        )
+                                    }
                                 }
                             },
                             onShareClick = { newsItem ->
@@ -118,6 +205,26 @@ fun NewsScreen(
 
                     // Load more when reaching end (only for "My Feed")
                     LaunchedEffect(pagerState.currentPage) {
+                        val currentIndex = pagerState.currentPage
+                        if (currentIndex > 0 && currentIndex % 3 == 0 && currentIndex > lastAdShownIndex) {
+                            lastAdShownIndex = currentIndex
+
+                            // This will show the ad ONLY if it successfully loaded above
+                            activity?.let {
+                                showInterstitialAd(
+                                    activity = it,
+                                    placementId = "interstitial_placement",
+                                    enableClickCounting = true,
+                                    threshold = 1,
+                                    onAdDismissed = {
+                                        // Reload for next time
+                                        AdSdkManager.loadInterstitialAd(it, "interstitial_placement")
+                                    }
+                                )
+                            }
+                        }
+
+                        // Load More Data Logic
                         if (uiState.selectedCategory == "My Feed" &&
                             pagerState.currentPage >= uiState.filteredNewsList.size - 3) {
                             viewModel.loadNextPage()
@@ -252,23 +359,23 @@ fun NewsCard(
     onShareClick: (News) -> Unit,
     showSwipeHint: Boolean = false
 ) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Featured Image with overlay - FIXED HEIGHT
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(350.dp) // Slightly reduced to give more space to content
+                    .height(250.dp)
                     .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
             ) {
-                // Image with proper content scale
                 AsyncImage(
                     model = newsItem.imageUrl,
                     contentDescription = newsItem.title,
@@ -276,7 +383,7 @@ fun NewsCard(
                     contentScale = ContentScale.Crop
                 )
 
-                // Enhanced gradient overlay for better text readability
+                // Dark Gradient Overlay for text readability
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -285,66 +392,12 @@ fun NewsCard(
                                 colors = listOf(
                                     Color.Black.copy(alpha = 0.15f),
                                     Color.Black.copy(alpha = 0.5f)
-                                ),
-                                startY = 0f,
-                                endY = 1000f
+                                )
                             )
                         )
                 )
 
-                // Top bar with more options
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(16.dp)
-//                        .align(Alignment.TopCenter),
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-                    // Source badge
-//                    Surface(
-//                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-//                        shape = RoundedCornerShape(20.dp),
-//                        shadowElevation = 4.dp
-//                    ) {
-//                        Row(
-//                            verticalAlignment = Alignment.CenterVertically,
-//                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-//                        ) {
-//                            Surface(
-//                                color = MaterialTheme.colorScheme.primary,
-//                                shape = CircleShape,
-//                                modifier = Modifier.size(6.dp)
-//                            ) {}
-//
-//                            Spacer(Modifier.width(6.dp))
-//
-//                            Text(
-//                                text = "LIVE",
-//                                style = MaterialTheme.typography.labelSmall,
-//                                fontWeight = FontWeight.Bold,
-//                                fontSize = 10.sp,
-//                                color = MaterialTheme.colorScheme.primary
-//                            )
-//                        }
-//                    }
-
-                    // More options button with better visibility
-//                    Surface(
-//                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-//                        shape = CircleShape
-//                    ) {
-//                        IconButton(onClick = { /* Show options menu */ }) {
-//                            Icon(
-//                                Icons.Default.MoreVert,
-//                                contentDescription = "More options",
-//                                tint = MaterialTheme.colorScheme.onSurface
-//                            )
-//                        }
-//                    }
-//                }
-
-                // Category chips at bottom of image
+                // Category Chips
                 if (newsItem.categories.isNotEmpty()) {
                     Row(
                         modifier = Modifier
@@ -360,10 +413,10 @@ fun NewsCard(
                             ) {
                                 Text(
                                     text = category.uppercase(),
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
+                                    fontSize = 10.sp,
                                     color = Color.White
                                 )
                             }
@@ -372,84 +425,46 @@ fun NewsCard(
                 }
             }
 
-            // Content Section with scrollable content
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f) // Takes remaining space
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .weight(1f)
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
             ) {
-                // Source header with actions
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 10.dp)
                 ) {
-                    // Brand logo
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(6.dp)
                     ) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(6.dp)
-                        ) {
-                            Text(
-                                text = "in",
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White
-                            )
-                        }
-                        Spacer(Modifier.width(6.dp))
                         Text(
-                            text = "stream",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.5).sp
+                            text = "in",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
                         )
                     }
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "stream",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                    // Action buttons
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        // Bookmark
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = CircleShape
-                        ) {
-                            IconButton(
-                                onClick = { /* Bookmark logic */ },
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.BookmarkBorder,
-                                    contentDescription = "Bookmark",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                    Spacer(Modifier.weight(1f))
+
+                    // Action Buttons
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        IconButton(onClick = { /* Bookmark */ }, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.Default.BookmarkBorder, contentDescription = "Bookmark", modifier = Modifier.size(20.dp))
                         }
-
-                        // Share
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = CircleShape
-                        ) {
-                            IconButton(
-                                onClick = { onShareClick(newsItem) },
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Share,
-                                    contentDescription = "Share",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                        IconButton(onClick = { onShareClick(newsItem) }, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.Default.Share, contentDescription = "Share", modifier = Modifier.size(20.dp))
                         }
                     }
                 }
@@ -457,50 +472,72 @@ fun NewsCard(
                 // Title - Clickable with better typography
                 Text(
                     text = newsItem.title,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = 24.sp,
-                    lineHeight = 32.sp,
+                    fontSize = 20.sp,
+                    lineHeight = 26.sp,
                     maxLines = 4,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .clickable { onTitleClick(newsItem.externalLink) }
-                        .padding(bottom = 12.dp),
+                        .padding(bottom = 8.dp),
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // Description with better spacing
+                // Description - Strictly limited to 4 lines
                 Text(
                     text = newsItem.description,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontSize = 16.sp,
-                    lineHeight = 26.sp,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp,
+                    overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                Spacer(Modifier.weight(1f))
+                // Spacer pushes footer to the bottom of this weighted column
+                Spacer(Modifier.weight(0.5f))
 
-                // Metadata footer
+                // Metadata Footer
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Time and source
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "${newsItem.publishedTime} • ${newsItem.source}",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        )
-                    }
+                    Text(
+                        text = "${newsItem.publishedTime} • ${newsItem.source}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            if (activity != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AndroidView(
+                        modifier = Modifier.fillMaxWidth(),
+                        factory = { ctx ->
+                            FrameLayout(ctx).apply {
+                                layoutParams = ViewGroup.LayoutParams(
+                                    ViewGroup.LayoutParams.MATCH_PARENT,
+                                    ViewGroup.LayoutParams.WRAP_CONTENT
+                                )
+                                this.tag = "banner_container_first"
+                                showBanner(
+                                    activity = activity,
+                                    parent = this,
+                                    onAdLoaded = { Log.d("NewsCard","Ad loaded") },
+                                    onAdFailed = { Log.d("NewsCard","Ad failed: $it") }
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -576,3 +613,8 @@ fun AnimatedSwipeHint() {
         }
     }
 }
+
+private const val REWARDED_PREFS = "news_rewarded_ad_prefs"
+private const val REWARDED_LAST_SHOWN_KEY = "last_rewarded_shown_at"
+private const val REWARDED_COOLDOWN_MILLIS = 15 * 60 * 1000L
+private const val REWARDED_PLACEMENT_ID = "rewarded_placement"
